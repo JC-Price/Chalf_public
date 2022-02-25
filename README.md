@@ -220,31 +220,31 @@ Combined Residue Mapper:
 
 CHalf v4.2:
 
-- Input Format:
-- Basic Operatation:
-- Masterfile Editing:
-- Editing CHalf Defaults.csv
-- Other CHalf Tools:
+- Input Format: Coming Soon
+- Basic Operatation: Coming Soon
+- Masterfile Editing: Coming Soon
+- Editing CHalf Defaults.csv: Coming Soon
+- Other CHalf Tools: Coming Soon
 	- Label Finder
 	- Fitting Efficiency
 	- Combined Site
 	- Residue Mapper
 	- Combined Residue Mapper
 
-Outputs Explained In Depth:
+Outputs Explained In Depth: Coming Soon
 
-- CHalf:
-- Label Finder (Label Efficiency):
-- Fitting Efficiency:
-- Combined Site:
-- Residue Mapper:
-- Combined Residue Mapper:
+- CHalf: Coming Soon
+- Label Finder (Label Efficiency): Coming Soon
+- Fitting Efficiency: Coming Soon
+- Combined Site: Coming Soon
+- Residue Mapper: Coming Soon
+- Combined Residue Mapper: Coming Soon
 
 
 For Working With Non-PEAKS Outputs:
 
-- CHalf:
-- Other CHalf Tools:
+- CHalf: Coming Soon
+- Other CHalf Tools: Coming Soon
 
 ## Support
 As we have developed CHalf, we have put a lot of effort into addressing possible errors that could occur when calcuating CHalf values or preparing other outputs. We have also tried to reduce room for user error. If you are experiencing errors, please refer to the Common Error section bellow before contacting the JC Price Lab for support. Most errors are a result of improperly selecting inputs or improperly specifying run conditions unique to your samples. Modifying CHalf or using nonstandard inputs runs the risk of raising unanticipated errors, so do so at your own risk. Before using nonstandard inputs or modifying CHalf, please review the demo section within this README.
