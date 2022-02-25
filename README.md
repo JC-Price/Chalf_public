@@ -4,8 +4,8 @@
 
 CHalf is a protein stability research tool. CHalf uses peptide intensity information within a denaturation curve to calculate the denaturation midpoint (“CHalf”) of protein/peptide fragments.  The tool was designed for use with mass spectrometry based information, and is currently seamless with PEAKS Studio style outputs.
 
-As proteins are subjected to varying concentrations of denaturing solutions (i.e. GdmCl) or temperatures, they unfold in varying ammounts, exposing sites that can be labeled using tags such as iodine.
-CHalf measures what ammount of protein is denatured at these differing conentration points and produces a sigmoidal curve. The midpoint of this sigmoidal curve is the CHalf value and represents the relative folding stability of these protein/peptide fragments.
+As proteins are subjected to varying concentrations of denaturing solutions (i.e. GdmCl) or temperatures, they unfold in varying amounts, exposing sites that cause precipitation (for thermal denaturation style experiments) or are labeled using tags such as iodine (for chemical denaturation style experiments).
+CHalf uses peptide signal intensity at these differing conentration points and produces a sigmoidal curve. The midpoint of this sigmoidal curve is the CHalf value and represents the relative folding stability of these protein/peptide fragments.
 
 Included with CHalf is a suite of tools that can be used to calculate the label and fitting efficiency of sample preparation, to compare single residue protein stability across conditions, and to compare regional stability across residues within a protein in one or multiple conditions.
 
