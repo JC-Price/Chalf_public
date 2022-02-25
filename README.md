@@ -24,28 +24,17 @@ Folding Assay and CHalf Release Paper: doi
 Citation:
 
 ## Table of Contents
-- [Installation](https://github.com/JC-Price/Folding-Chalf/blob/master/CHalf%20Versions/v4.2/README.md#installation)
-- [Features](https://github.com/JC-Price/Folding-Chalf/blob/master/CHalf%20Versions/v4.2/README.md#features)
-- [Instructions](https://github.com/JC-Price/Folding-Chalf/blob/master/CHalf%20Versions/v4.2/README.md#instructions)
-- [Demo](https://github.com/JC-Price/Folding-Chalf/blob/master/CHalf%20Versions/v4.2/README.md#demo)
-- [Support](https://github.com/JC-Price/Folding-Chalf/blob/master/CHalf%20Versions/v4.2/README.md#support)
+- [Installation](https://github.com/JC-Price/Chalf_public/blob/main/README.md#installation)
+- [Features](https://github.com/JC-Price/Chalf_public/blob/main/README.md#features)
+- [Instructions](https://github.com/JC-Price/Chalf_public/blob/main/README.md#instructions)
+- [Demo](https://github.com/JC-Price/Chalf_public/blob/main/README.md#demo)
+- [Support](https://github.com/JC-Price/Chalf_public/blob/main/README.md#support)
 
 ## Installation
 
 Version 4.2 - Excecuteable file with integrated tools and GUI. Does not require Python installation.
 
-Download: fakeurl.com
-
 Installation: Extract the zipped folder and run CHalf_v4.2.exe.
-
-Version 3.3 - Standalone program (no integrated tools or GUI). Only to be used by more advanced users. Requires Python installation with Numpy, Pandas, OS, Scipy, and Matplotlib.
-
-Download: fakeurl.com
-
-Installation: Run using python terminal or edit masterfile line in a Python IDE and run.
-```bash
-  python CHalf_v3.3.py 'masterfile.csv'
-```
 
 ## Features
 
@@ -150,49 +139,6 @@ CHalf_v4.2:
 - Press Start and a popup will appear indicating that CHalf has been initialized. Press OK and CHalf will start. A progress bar should be visible in the console, and CHalf will run until a popup says that the run is complete or an error apepears. For errors, check the common error section.
 - Once CHalf is complete, you may view the outputs by pressing Open Folder.
 
-CHalf_v3.3:
-- Create a Masterfile using 'CHalf_v3.3 Masterfile Template.csv.'
-        
-        MASTERFILE EDITING:
-        1. Specify Run Description and Condition (eash row is a seperate condition unless you specify multiple replicates for a condition)
-        2. Input the replicate number for each replicate (if there is only one replicate in a condition, just list it as 1; for multiple replicates, be sure to have the same run description and condition for each replicate.)
-        3. Input the path for your Protein-Peptides Infile for each condition and its replicates. (this is the path of your PEAKS protein-peptides.csv file)
-        4. Input the path for your Protein Infile for each condition and its replicates. (this is the path of your PEAKS proteins.csv file)
-        5. Specify CD or HD (chemical vs heat denature)
-        6. Under Conc/Temp Start, list your first concentration/temperatures
-        7. In the columns following Conc/Temp Start, fill in your other conc/temp values horizontally (i.e. Conc/Temp Start: Conc1, [COLUMN K]: Conc2, [COLUMN L]: Conc3, ..., [LAST NEEDED COLUMN]: Conc[END])
-        8. Specify Calculation Options:
-            - Individual Rep Analysis (Yes) : Produces a [CONDTION]_Rep[n]_OUTPUT.csv file for each replicate in your run.
-            - Rep Graphs (No) : Produces graph outputs for each protein/peptide in your replicates that meet the specified conditions (see Graph Filters). (It is recommended to leave graphing off as graphing the values takes more time than running the actual calculations. Most graphs aren't really necessary, and we have found that the other tools included with CHalf are more useful for making inferences about protein stability.)
-            - Combined Analysis (Yes) : Combines data from replicates to calculate CHalf values for a whole condition. Without this, Remove Outlier Analysis will not occur and Fitting Efficiency cannot be calculated.
-            - Remove Outlier Analysis (Yes) : Calculates trimmed CHalf values and trimmed curve values. Without this, Fitting Efficiency cannot be calculated.
-            - Graph Combined (No) : Produces graph outputs for each protein/peptide in your combined data that meet the specified conditions (see Graph Filters).
-            - Giant Output (No) : Creates a large table with data from each of your conditions. This can be useful for comparing protein/peptide presence across conditions if your experiment uses fractionation, but, otherwise, this option can largely be ignored.
-            - Minimum Points for Calculation (4) : Sets the minimum number of non-null points CHalf will accept to fit a protein/peptide to a sigmoidal curve. It is not recommended to go any lower than 4 if you want useful data.
-            - Outier StdErr Cutoff (StdErr x #) (2) : Sets the cutoff interval for points to be used in calculating sigmoidal curves. Points whose values are greater than the standard error times the number listed will be treated as outliers and will be excluded from the fitting calculation.
-            - Graph Filters: (default values are the most useful)
-                CI Mx% of Range (0.3): Graphs if 2 * [CONFIDENCE INTERVAL] <= [NUMBER] * [CONC/TEMP RANGE]
-                R^2 Cutoff (0.99): Graphs if R^2 value for sigmoidal curve >= [NUMBER]
-                CHalf Range Cutoff (0.5): Graphs if [FIRST CONC/TEMP] - [TEMP/CONC RANGE] * [NUMBER] <= [CHalf] <= [LAST CONC/TEMP] + [CONC/TEMP RANGE] * [NUMBER]
-            - Other Features: (see Features section for detailed explanation) (all Yes by defualt)
-                Label Efficiency
-                Fitting Efficiency
-                Combined Site
-                Residue Mapper
-                Dynamic Y-axis (No): Makes the y-axis of figures in Combined Site and Residue Mapper adjust dynamically to CHalf values
-                Min (0): Minimum value on y-axis for Combined Site and Residue Mapper (Should be close to your lowest concentration/temperature) (will be ignored if Dynamic is Yes)
-                Max (3.6): Maximum value on y-axis for Combined Site and Residue Mapper (Should be close to your highest concentration/temperature) (will be ignored if Dynamic is Yes)
-            - CHalf Version: Leave as v3.3 if you are using v3.3.
-- (For running in Python IDE) In CHalf_v3.3, Replace 'DIRECTORY' in os.chdir('DIRECTORY') on Line 34 with the path of the directory that contains your master file (i.e C:/Users/user/Desktop/CHalf_v3.3)
-- (For running in Python IDE) Replace "MASTERFILE.csv" on line 41 with the name of your masterfile (i.e Folding Assay Masterfile.csv)
-- (For running in Python IDE) Specify graphics file_type on line 59 (.jpg/.svg/.png) (.jpg by defualt)
-- Run CHalf_v3.3.py
-- If you would like to run CHalf in command line instead of in a Python IDE, run the following command (replacing 'MASTERFILE.csv' with the path of your masterfile):
-```bash
-    python CHalf_v3.3.py 'MASTERFILE.csv'
-```
-- The run will be complete when it prints 'CHalf Run Complete.'
-
 Label Finder (Label Efficiency):
 
 - Select Label Finder (Label Efficiency) under Other Tools on the Menubar.
@@ -285,13 +231,6 @@ CHalf v4.2:
 	- Residue Mapper
 	- Combined Residue Mapper
 
-CHalf v3.3:
-
-- Creating a Masterfile:
-- Running Using Python IDE:
-- Running Using Command Line:
-- Using CHalf Tools:
-
 Outputs Explained In Depth:
 
 - CHalf:
@@ -306,6 +245,7 @@ For Working With Non-PEAKS Outputs:
 
 - CHalf:
 - Other CHalf Tools:
+
 ## Support
 As we have developed CHalf, we have put a lot of effort into addressing possible errors that could occur when calcuating CHalf values or preparing other outputs. We have also tried to reduce room for user error. If you are experiencing errors, please refer to the Common Error section bellow before contacting the JC Price Lab for support. Most errors are a result of improperly selecting inputs or improperly specifying run conditions unique to your samples. Modifying CHalf or using nonstandard inputs runs the risk of raising unanticipated errors, so do so at your own risk. Before using nonstandard inputs or modifying CHalf, please review the demo section within this README.
 
