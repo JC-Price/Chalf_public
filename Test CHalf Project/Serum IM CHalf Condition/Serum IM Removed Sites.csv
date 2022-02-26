@@ -1,0 +1,2 @@
+v4.2,Accession,Peptide,Label@Accession,Label Site,Label Type,Residue Number,Count,trim_CHalf,trim_r_squared,trim_ratioTOrange,trim_CHalf_ConfidenceInterval,trim_slope,trim_b
+0,P01009|A1AT_HUMAN,"['LSITGTY(+125.90)DLK', 'LSITGTY(+125.90)DLKSVLGQLGITK']",Y(+125.90)_Y321_P01009|A1AT_HUMAN,Y321,Y(+125.90),321.0,2,1.4901940464724368,0.7911956935705294,82487065027124.33,296128563447376.3,Positive,0.007504200983706333

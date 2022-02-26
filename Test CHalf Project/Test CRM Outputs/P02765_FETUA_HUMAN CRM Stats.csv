@@ -1,0 +1,4 @@
+Label@Site,Label,Site,Count_Serum IM ,trim_CHalf_Serum IM ,trim_CHalf_ConfidenceInterval_Serum IM ,trim_slope_Serum IM ,Count_Serum TMT ,trim_CHalf_Serum TMT ,trim_CHalf_ConfidenceInterval_Serum TMT ,trim_slope_Serum TMT 
+Y(+251.79)@27,Y(+251.79),27,1,2.8214526797171735,0.2707973697988059,Negative,,,,
+Y(+125.90)@27,Y(+125.90),27,,,,,1,2.097716080905204,0.10601052789553568,Positive
+H(+125.90)@108,H(+125.90),108,1,1.4920566975096503,0.022597869452068188,Negative,,,,
