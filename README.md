@@ -218,7 +218,7 @@ Combined Residue Mapper:
 - A popup will appear indicating that the run is complete or an error occured. If an error occurs, consult the error section of the documentation for fixes to common problems.
 ## Demo
 
-CHalf v4.2:
+CHalf v4.2: https://youtu.be/RAtCNqzh-aw
 
 - Input Format: Coming Soon
 - Basic Operatation: Coming Soon
