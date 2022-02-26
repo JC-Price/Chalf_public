@@ -1,6 +1,6 @@
 
 # CHalf v4.2
-![alt text](https://github.com/JC-Price/Folding-Chalf/blob/master/CHalf%20Versions/v4.2/CHalf%20v4.2%20README%20Logo.png)
+![alt text](https://github.com/JC-Price/Chalf_public/blob/main/Graphics/CHalf%20v4.2%20README%20Logo.png)
 
 CHalf is a protein stability research tool. CHalf uses peptide intensity information within a denaturation curve to calculate the denaturation midpoint (“CHalf”) of protein/peptide fragments.  The tool was designed for use with mass spectrometry based information, and is currently seamless with PEAKS Studio style outputs.
 
