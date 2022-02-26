@@ -1,0 +1,10 @@
+Name:,,Amino Acid:,,Label ID:,,Default:
+Tyrosine Iodination,,Y,,Y(+125.90),,TRUE
+Tyrosine Di-iodination,,Y,,Y(+251.79),,TRUE
+Histidine Iodination,,H,,H(+125.90),,TRUE
+Histidine Di-iodination,,H,,H(+251.79),,TRUE
+Cysteine Sulfenic,,C,,C(+48.97),,TRUE
+Cysteine Sulfonic,,C,,C(+31.99),,TRUE
+Methionine Oxidation,,M,,M(+15.99),,TRUE
+Methionine Sulfone,,M,,M(+31.99),,TRUE
+Tryptophan Iodination,,W,,W(+125.90),,TRUE
