@@ -2,7 +2,7 @@
 # CHalf v4.2
 ![alt text](https://github.com/JC-Price/Chalf_public/blob/main/Graphics/CHalf%20v4.2%20README%20Logo.png)
 
-CHalf is a protein stability research tool. CHalf uses peptide intensity information within a denaturation curve to calculate the denaturation midpoint (“CHalf”) of protein/peptide fragments.  The tool was designed for use with mass spectrometry based information, and is currently seamless with PEAKS Studio style outputs.
+CHalf is a protein stability research tool. CHalf uses peptide intensity information within a denaturation curve to calculate the denaturation midpoint (“CHalf”) of protein/peptide fragments.  The tool was designed for use with mass spectrometry based information and is currently seamless with PEAKS Studio style outputs.
 
 As proteins are subjected to varying concentrations of denaturing solutions (i.e. GdmCl) or temperatures, they unfold in varying amounts, exposing sites that cause precipitation (for thermal denaturation style experiments) or are labeled using tags such as iodine (for chemical denaturation style experiments).
 CHalf uses peptide signal intensity at these differing conentration points and produces a sigmoidal curve. The midpoint of this sigmoidal curve is the CHalf value and represents the relative folding stability of these protein/peptide fragments.
@@ -10,7 +10,7 @@ CHalf uses peptide signal intensity at these differing conentration points and p
 Included with CHalf is a suite of tools that can be used to calculate the label and fitting efficiency of sample preparation, to compare single residue protein stability across conditions, and to compare regional stability across residues within a protein in one or multiple conditions.
 
 ## Authors
-Chad D. Hyer, Connor Hadderly, Monica Berg, Hsien-Jung Lavender Lin, John C. Price
+[Chad D. Hyer](https://www.linkedin.com/in/chad-hyer-833702162/), [Connor Hadderly](https://www.linkedin.com/in/connorthaderlie), Monica Berg, [Hsien-Jung Lavender Lin](https://www.linkedin.com/in/hsien-jung-lin-254538197), [John C. Price](https://www.linkedin.com/in/john-price-1ba26b35/)
 
   
 ## Acknowledgements
@@ -19,9 +19,19 @@ Brigham Young University Department of Chemistry and Biochemistry
 
 John C Price Lab Group
 
-Folding Assay and CHalf Release Paper: doi
+Special thanks to Dr. Bradley R. Naylor for development assistance.
+
+Folding Assay and CHalf Release Paper: Coming Soon
 
 Citation:
+
+Lin, H. L.; James, I.; Hyer, C.;   Haderlie, C.;   Zackrison, M.; Bateman, T.; Daley, A.; Park, J. S.; Berg, M.; Zuniga, N.; Price, J. 
+C. A Novel Assay using Iodination and multiplexing to quantify change in protein fold stability of human serum proteins in 
+proteome. (Manuscript in Preparation)
+
+## Contact
+
+For inquiries about CHalf or to request access to the original Python source code, reach out to hyer.chad@gmail.com.
 
 ## Table of Contents
 - [Installation](https://github.com/JC-Price/Chalf_public/blob/main/README.md#installation)
