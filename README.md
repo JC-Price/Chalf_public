@@ -32,6 +32,7 @@ proteome. (Manuscript in Preparation)
 ## Contact
 
 For inquiries about CHalf or to request access to the original Python source code, reach out to hyer.chad@gmail.com.
+[Join our email list](https://forms.gle/QjgdJstsEWZRYM8K9) for updates on CHalf development and other tools. This will help you keep the most up to date version and get access to new features we will add on as we continue development.
 
 ## Table of Contents
 - [Installation](https://github.com/JC-Price/Chalf_public/blob/main/README.md#installation)
