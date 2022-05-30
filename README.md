@@ -45,6 +45,8 @@ For inquiries about CHalf or to request access to the original Python source cod
 
 Version 4.2 - Excecuteable file with integrated tools and GUI. Does not require Python installation.
 
+[Download](https://github.com/JC-Price/Chalf_public/releases/tag/CHalf_v4.2)
+
 Installation: Extract the zipped folder and run CHalf_v4.2.exe.
 
 ## Features
