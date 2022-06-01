@@ -1,6 +1,6 @@
 
-# CHalf v4.2
-![alt text](https://github.com/JC-Price/Chalf_public/blob/main/Graphics/CHalf%20v4.2%20README%20Logo.png)
+# CHalf v4.2.1
+![alt text](https://github.com/JC-Price/Chalf_public/blob/main/Graphics/CHalf%20v4.2.1%20README%20Logo.png)
 
 CHalf is a protein stability research tool. CHalf uses peptide intensity information within a denaturation curve to calculate the denaturation midpoint (“CHalf”) of protein/peptide fragments.  The tool was designed for use with mass spectrometry based information and is currently seamless with PEAKS Studio style outputs.
 
@@ -26,8 +26,8 @@ Folding Assay and CHalf Release Paper: Coming Soon
 Citation:
 
 Lin, H. L.; James, I.; Hyer, C.;   Haderlie, C.;   Zackrison, M.; Bateman, T.; Daley, A.; Park, J. S.; Berg, M.; Zuniga, N.; Price, J. 
-C. A Novel Assay using Iodination and multiplexing to quantify change in protein fold stability of human serum proteins in 
-proteome. (Manuscript in Preparation)
+C. Quantifying In Situ Structural Stabilities of Human Blood
+Plasma Proteins using a Novel Iodination Protein Stability Assay (IPSA). (Manuscript Under Review)
 
 ## Contact
 
@@ -43,11 +43,11 @@ For inquiries about CHalf or to request access to the original Python source cod
 
 ## Installation
 
-Version 4.2 - Excecuteable file with integrated tools and GUI. Does not require Python installation.
+Version 4.2.1 - Excecuteable file with integrated tools and GUI. Does not require Python installation.
 
-[Download](https://github.com/JC-Price/Chalf_public/releases/tag/CHalf_v4.2)
+[Download](https://github.com/JC-Price/Chalf_public/releases/tag/CHalf_v4.2.1)
 
-Installation: Extract the zipped folder and run CHalf_v4.2.exe.
+Installation: Extract the zipped folder and run CHalf_v4.2.1.exe.
 
 ## Features
 
@@ -56,7 +56,7 @@ Installation: Extract the zipped folder and run CHalf_v4.2.exe.
         Inputs:
             -proteins.csv (from PEAKS)
             -protein-peptides.csv (from PEAKS)
-            -Masterfile.csv (only must be prepared if using v3.3 or lower, v4.2 onwards prepares this for you)
+            -Masterfile.csv (only must be prepared if using v3.3 or lower, v4.2.1 onwards prepares this for you)
         
         Outputs:
             -[CONDITION]_Rep[n]_OUTPUT.csv - CHalf values and curve data for each Rep in a condition
@@ -104,7 +104,7 @@ Installation: Extract the zipped folder and run CHalf_v4.2.exe.
         Outputs:
             -[ACCESSION][.svg/.jpg/.png] - Graphs of CHalf values [y-axis] vs. label site [x-axis] for a given protein.
             -[ACCESSION].csv - Statistical values for graphs. For reference.
-- Combined Residue Mapper - Compares Residue Mapper ouputs across conditions. Note: CRM performed in CHalf v4.2 if you opt to do Combined Site or if you perform it manually using the Other Tools Menu.
+- Combined Residue Mapper - Compares Residue Mapper ouputs across conditions. Note: CRM performed in CHalf v4.2.1 if you opt to do Combined Site or if you perform it manually using the Other Tools Menu.
 
         Inputs: [CONDITION] Combined Label Sites.csv (from Fitting Efficiency)
 
@@ -114,8 +114,8 @@ Installation: Extract the zipped folder and run CHalf_v4.2.exe.
             -[ACCESSION] CRM Stats.csv - Statistical values for graphs. For reference.
 ## Instructions
 
-CHalf_v4.2:
-- Run CHalf_v4.2.exe and a GUI will open
+CHalf_v4.2.1:
+- Run CHalf_v4.2.1.exe and a GUI will open
 - Select an output directory by pressing Set Dir (unless you have a default directroy set in CHalf Defaults.csv)
 - Input Project Name and press Create Project or press Open Project to select an existing project.
 - Press Add Condition to add conditions to your project. This opens the Condition Creator.
@@ -231,7 +231,7 @@ Combined Residue Mapper:
 - A popup will appear indicating that the run is complete or an error occured. If an error occurs, consult the error section of the documentation for fixes to common problems.
 ## Demo
 
-CHalf v4.2: https://youtu.be/RAtCNqzh-aw
+CHalf v4.2.1: https://youtu.be/RAtCNqzh-aw
 
 - Input Format: Coming Soon
 - Basic Operatation: Coming Soon
