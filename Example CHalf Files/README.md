@@ -5,7 +5,7 @@ For guided, step-by-step instructions, watch our [demo video](https://youtu.be/R
 ## Instructions
   -Download the "protein_peptides.csv" and "proteins.csv" files from [Demo Mass Spec Files](https://github.com/JC-Price/Chalf_public/tree/main/Example%20CHalf%20Files/Demo%20Mass%20Spec%20Outputs).
   
-  -Open CHalf_v4.2.exe
+  -Open CHalf_v4.2.1.exe
   
   -Choose an output directory and name and create your project
   
