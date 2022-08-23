@@ -233,7 +233,7 @@ Combined Residue Mapper:
 
 CHalf v4.2.1: https://youtu.be/RAtCNqzh-aw
 
-- Input Format: Coming Soon
+- Input Format: [File Download](https://github.com/JC-Price/Chalf_public/blob/main/Demos/CHalf%20Inputs%20Formatting%20Guide.xlsx)
 - Basic Operatation: Coming Soon
 - Masterfile Editing: Coming Soon
 - Editing CHalf Defaults.csv: Coming Soon
@@ -256,7 +256,7 @@ Outputs Explained In Depth: Coming Soon
 
 For Working With Non-PEAKS Outputs:
 
-- CHalf: Coming Soon
+- CHalf: [File Download](https://github.com/JC-Price/Chalf_public/blob/main/Demos/CHalf%20Inputs%20Formatting%20Guide.xlsx)
 - Other CHalf Tools: Coming Soon
 
 ## Support
