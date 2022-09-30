@@ -256,7 +256,9 @@ Outputs Explained In Depth: Coming Soon
 
 For Working With Non-PEAKS Outputs:
 
-- CHalf: [File Download](https://github.com/JC-Price/Chalf_public/blob/main/Demos/CHalf%20Inputs%20Formatting%20Guide.xlsx)
+- CHalf: [Formatting Guide](https://github.com/JC-Price/Chalf_public/blob/main/Demos/CHalf%20Inputs%20Formatting%20Guide.xlsx) (Excel file to be downloaded)
+
+	See also [CHalf Preprocessing Tools](https://github.com/JC-Price/Chalf_public/tree/main/CHalf%20Preprocesing%20Tools)
 - Other CHalf Tools: Coming Soon
 
 ## Support
@@ -270,11 +272,11 @@ Common Errors:
 
 - Label Finder Dictionary.csv not found. Please add to [PATH].
 
-    Solution: The dictionary file used by Label Finder is not in the CHalf directory or it is not named properly. In the case that the file is missing, download from here: 'fakeurl.com'.
+    Solution: The dictionary file used by Label Finder is not in the CHalf directory or it is not named properly. In the case that the file is missing, download from here: [Download](https://github.com/JC-Price/Chalf_public/blob/main/Config%20Files/Label%20Finder%20Dictionary.csv)
 
 - CHalf Defaults.csv not found. Please add to folder.
 
-    Solution: The settings file used by CHalf is not in the CHalf directory or it is not named properly. In the case that the file is missing, download from here: 'fakeurl.com'.
+    Solution: The settings file used by CHalf is not in the CHalf directory or it is not named properly. In the case that the file is missing, download from here: [Download](https://github.com/JC-Price/Chalf_public/blob/main/Config%20Files/CHalf%20Defaults.csv)
 
 - No input file or output directory selected.
 
