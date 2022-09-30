@@ -3,8 +3,8 @@
 CHalf is designed to be compatible with most any workflow. When we built it, we optimized it for outputs from PEAKS Studio, but we have included some tools for quickly converting other MS data processing software outputs to CHalf compatible input files (protein-peptides.csv and proteins.csv). We have not created tools for converting outputs from every MS data processing software, but we intend to continually update this list of tools as new preprocessing tools are created. If your software output lacks a preprocessing tool please see our [CHalf Formatting Guide](https://github.com/JC-Price/Chalf_public/blob/main/Demos/CHalf%20Inputs%20Formatting%20Guide.xlsx). As you learn to format your own outputs to be compatible with CHalf, we invite you to submit your own preprocessing tools to us so that everyone can benefit from being able to use CHalf. Your submitted preprocessing tools will be attributed to you in this document and will include a section for users to properly cite your tool if used.
 
 ## Table of Contents
-- [MaxQuant](https://github.com/JC-Price/Chalf_public/edit/main/CHalf%20Preprocesing%20Tools/README.md#maxquant)
-- [Proteome Discoverer (PD)](https://github.com/JC-Price/Chalf_public/edit/main/CHalf%20Preprocesing%20Tools/README.md#proteome-discoverer-pd)
+- [MaxQuant](https://github.com/JC-Price/Chalf_public/blob/main/CHalf%20Preprocesing%20Tools/README.md#maxquant)
+- [Proteome Discoverer (PD)](https://github.com/JC-Price/Chalf_public/blob/main/CHalf%20Preprocesing%20Tools/README.md#proteome-discoverer-pd)
 
 ## MaxQuant
 Author: Chad D. Hyer - Brigham Young University - Department of Chemistry and Biochemistry
