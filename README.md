@@ -23,11 +23,11 @@ Special thanks to Dr. Bradley R. Naylor for development assistance.
 
 Folding Assay and CHalf Release Paper: Coming Soon
 
-Citation:
+Citations:
 
-Lin, H. L.; James, I.; Hyer, C.;   Haderlie, C.;   Zackrison, M.; Bateman, T.; Daley, A.; Park, J. S.; Berg, M.; Zuniga, N.; Price, J. 
-C. Quantifying In Situ Structural Stabilities of Human Blood
-Plasma Proteins using a Novel Iodination Protein Stability Assay (IPSA). (Manuscript Under Review)
+Hyer, C. D.; Lin, H.-J. L.; Haderlie, C. T.; Berg, M.; Price, J. C. CHalf: Folding Stability Made Simple. (Manuscript under review)
+
+Lin, H.-J. L.; James, I.; Hyer, C. D.; Haderlie, C. T.; Zackrison, M. J.; Bateman, T. M.; Berg, M.; Park, J.-S.; Daley, S. A.; Zuniga Pina, N. R.; et al. Quantifying In Situ Structural Stabilities of Human Blood Plasma Proteins Using a Novel Iodination Protein Stability Assay. Journal of Proteome Research 2022. DOI: 10.1021/acs.jproteome.2c00323.
 
 ## Contact
 
@@ -56,7 +56,7 @@ Installation: Extract the zipped folder and run CHalf_v4.2.1.exe.
         Inputs:
             -proteins.csv (from PEAKS)
             -protein-peptides.csv (from PEAKS)
-            -Masterfile.csv (only must be prepared if using v3.3 or lower, v4.2.1 onwards prepares this for you)
+            -Masterfile.csv (prepared for you by CHalf)
         
         Outputs:
             -[CONDITION]_Rep[n]_OUTPUT.csv - CHalf values and curve data for each Rep in a condition
@@ -147,7 +147,7 @@ CHalf_v4.2.1:
         12. Press Process. A popup will appear if the condition has been created successfuly.
         13. Press Return
 - Press Refresh to confirm that your condition has been added to the project.
-- Add all conditions you would like to run. You may select a condition in the list to edit its masterfile or delete it. WARNING: Deleting a condition deletes the folder and all of the files inside it. Editing a masterfile is not difficult, but please refer to the section on masterfile editing in v3.3 to edit the masterfile properly.
+- Add all conditions you would like to run. You may select a condition in the list to edit its masterfile or delete it. WARNING: Deleting a condition deletes the folder and all of the files inside it. Editing a masterfile is not difficult, but please refer to the section on masterfile editing to edit the masterfile properly.
 - After adding all the conditions, you can specify what type of graphics outputs you would like (.svg/.jpg/.png) by pressing Graphics Options on the Menubar.
 - Press Start and a popup will appear indicating that CHalf has been initialized. Press OK and CHalf will start. A progress bar should be visible in the console, and CHalf will run until a popup says that the run is complete or an error apepears. For errors, check the common error section.
 - Once CHalf is complete, you may view the outputs by pressing Open Folder.
@@ -244,15 +244,7 @@ CHalf v4.2.1: https://youtu.be/RAtCNqzh-aw
 	- Residue Mapper
 	- Combined Residue Mapper
 
-Outputs Explained In Depth: Coming Soon
-
-- CHalf: Coming Soon
-- Label Finder (Label Efficiency): Coming Soon
-- Fitting Efficiency: Coming Soon
-- Combined Site: Coming Soon
-- Residue Mapper: Coming Soon
-- Combined Residue Mapper: Coming Soon
-
+Outputs Explained In Depth: [Link](https://github.com/JC-Price/Chalf_public/blob/main/Demos/CHalf%20Outputs%20Explained.md)
 
 For Working With Non-PEAKS Outputs:
 
