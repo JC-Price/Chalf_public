@@ -51,7 +51,7 @@ Installation: Extract the zipped folder and run CHalf_v4.2.1.exe.
 
 ## Features
 
-- CHalf - Fits chemical/heat denature mass spec data to a sigmod curve to calculate protein/peptide CHalf values.
+- CHalf - Fits chemical/heat denature mass spec data to a sigmoid curve to calculate protein/peptide CHalf values.
 
         Inputs:
             -proteins.csv (from PEAKS)
