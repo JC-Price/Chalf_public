@@ -1,0 +1,51 @@
+# CHalf Outputs Headers
+
+Headers from CHalf Table Files:
+- Index Header: Contains Version of CHalf used for processing
+- Accession@Peptide: Combination of Accession and Peptide Columns for use in identifying unique peptides with CHalf values
+- Accession: Uniprot Accession of protein associated with peptide
+- Peptide: Sequence of the identified peptide
+- Description: Description of the protein identified
+- Start: Start amino acid position of the peptide identified
+- End: End amino acid posisiotn of the peptide identified
+- [Denaturant Point]_Rep[n]: Denaturant points with abundances and replicate numbers sourced from input files
+- #pts: Number of points within the curve
+- #non Zero: Number of non-zero points within the curve
+- slope: Positive, negative, or nonexistant value (if not fit) indicating the direction of the curve fit
+- fitCurve_B: y-value of the maximum of the fit curve
+- fitCurve_A: y-value of the minimum of the fit curve
+- CHalf: Denaturation midpoint of the fitted curve; graphically identified as the point of inflection of the fitting curve
+- fitCurve_b: Indicates the steepness of the linear portion of the curve (ranging from 0 indicating flat to 1 indicating steep)
+- B_stderror: calculated standard error of the B value
+- A_stderror: calculated standard error of the A value
+- CHalf_stderror: calculated standard error of the CHalf value
+- b_stderror: calculated standard error of the b value
+- CHalf_ConfidenceInterval: calculated confidence
+- ratioTOrange
+- CHalf_confidenceInterval_lowBound
+- CHalf_confidenceInterval_upBound
+- b_confidenceInterval
+- b_confidenceInterval_lowBound
+- b_confidenceInterval_upBound
+- r_squared	CHalf_normalized- 
+- trim_#pts
+- trim_slope
+- trim_B
+- trim_A
+- trim_CHalf
+- trim_b
+- trim_B_stderror
+- trim_A_stderror
+- trim_CHalf_stderror
+- trim_b_stderror
+- trim_CHalf_ConfidenceInterval
+- trim_ratioTOrange
+- trim_CHalf_confidenceInterval_lowBound
+- trim_CHalf_confidenceInterval_upBound
+- trim_b_confidenceInterval- 
+- trim_b_confidenceInterval_lowBound
+- trim_b_confidenceInterval_upBound
+- trim_r_squared
+- trim_CHalf_normalized
+- Delta 6-0_Rep[n]
+- Range/Mean_Rep[n]
