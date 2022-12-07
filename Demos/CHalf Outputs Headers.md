@@ -12,30 +12,31 @@ Headers from CHalf Table Files:
 - #pts: Number of points within the curve
 - #non Zero: Number of non-zero points within the curve
 - slope: Positive, negative, or nonexistant value (if not fit) indicating the direction of the curve fit
-- fitCurve_B: y-value of the maximum of the fit curve
-- fitCurve_A: y-value of the minimum of the fit curve
-- CHalf: Denaturation midpoint of the fitted curve; graphically identified as the point of inflection of the fitting curve
+- fitCurve_B: Y-value of the maximum of the fit curve, unit of normalized abundance
+- fitCurve_A: Y-value of the minimum of the fit curve, unit of normalized abundance
+- CHalf: Denaturation midpoint of the fitted curve, unit of concentration/temperature values; graphically identified as the point of inflection of the fitting curve
 - fitCurve_b: Indicates the steepness of the linear portion of the curve (ranging from 0 indicating flat to 1 indicating steep)
-- B_stderror: calculated standard error of the B value
-- A_stderror: calculated standard error of the A value
-- CHalf_stderror: calculated standard error of the CHalf value
-- b_stderror: calculated standard error of the b value
-- CHalf_ConfidenceInterval: calculated confidence
-- ratioTOrange
-- CHalf_confidenceInterval_lowBound
-- CHalf_confidenceInterval_upBound
-- b_confidenceInterval
-- b_confidenceInterval_lowBound
-- b_confidenceInterval_upBound
-- r_squared	CHalf_normalized- 
-- trim_#pts
-- trim_slope
-- trim_B
-- trim_A
-- trim_CHalf
-- trim_b
-- trim_B_stderror
-- trim_A_stderror
+- B_stderror: Calculated standard error of the B value
+- A_stderror: Calculated standard error of the A value
+- CHalf_stderror: Calculated standard error of the C½ value
+- b_stderror: Calculated standard error of the b value
+- CHalf_ConfidenceInterval: Calculated confidence interval range for the C½ value, unit of concentration/temperature values
+- ratioTOrange: Ratio of C½ confidence interval to range of denaturant points (C½ / (denat_high-denat_low))
+- CHalf_confidenceInterval_lowBound: Low bound of C½ confidence interval range
+- CHalf_confidenceInterval_upBound: High bound of C½ confidence interval range
+- b_confidenceInterval: Confidence interval range of b value
+- b_confidenceInterval_lowBound: Low bound of b value confidence interval range
+- b_confidenceInterval_upBound: High bound of b value confidence interval range
+- r_squared: R^2 value of the fitting curve
+- CHalf_normalized: C½ value normalized to the range of the denaturant curve
+- trim_#pts: Number of points in the curve post outlier removal
+- trim_slope:
+- trim_B:
+- trim_A:
+- trim_CHalf:
+- trim_b:
+- trim_B_stderror:
+- trim_A_stderror:
 - trim_CHalf_stderror
 - trim_b_stderror
 - trim_CHalf_ConfidenceInterval
