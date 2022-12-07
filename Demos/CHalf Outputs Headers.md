@@ -29,24 +29,26 @@ Headers from CHalf Table Files:
 - b_confidenceInterval_upBound: High bound of b value confidence interval range
 - r_squared: R^2 value of the fitting curve
 - CHalf_normalized: C½ value normalized to the range of the denaturant curve
-- trim_#pts: Number of points in the curve post outlier removal
-- trim_slope:
-- trim_B:
-- trim_A:
-- trim_CHalf:
-- trim_b:
-- trim_B_stderror:
-- trim_A_stderror:
-- trim_CHalf_stderror
-- trim_b_stderror
-- trim_CHalf_ConfidenceInterval
-- trim_ratioTOrange
-- trim_CHalf_confidenceInterval_lowBound
-- trim_CHalf_confidenceInterval_upBound
-- trim_b_confidenceInterval- 
-- trim_b_confidenceInterval_lowBound
-- trim_b_confidenceInterval_upBound
-- trim_r_squared
-- trim_CHalf_normalized
-- Delta 6-0_Rep[n]
-- Range/Mean_Rep[n]
+- trim_#pts: Number of points in the curve after outlier removal
+- trim_slope: Slope of the fitted curve after outlier removal
+- trim_B: Fitted curve B value after outlier removal
+- trim_A: Fitted curve A value after outlier removal
+- trim_CHalf: CHalf value after outlier removal
+- trim_b: b value after outlier removal
+- trim_B_stderror: B standard error after outlier removal
+- trim_A_stderror: A standard error after outlier removal
+- trim_CHalf_stderror: CHalf standard error after outlier removal
+- trim_b_stderror: b value standard error after outlier removal
+- trim_CHalf_ConfidenceInterval: CHalf confidence interval range after outlier removal
+- trim_ratioTOrange: Ratio of trim_CHalf to denaturant range
+- trim_CHalf_confidenceInterval_lowBound: Low bound of trim_CHalf_condfidenceInterval
+- trim_CHalf_confidenceInterval_upBound: High bound of trim_CHalf_condfidenceInterval
+- trim_b_confidenceInterval: Confidence interval range for trim_b value
+- trim_b_confidenceInterval_lowBound: Low bound of trim_b_condfidenceInterval
+- trim_b_confidenceInterval_upBound: High bound of trim_b_condfidenceInterval
+- trim_r_squared: R^2 value of fitting curve after outlier removal
+- trim_CHalf_normalized: trim_CHalf value normalized to the range of the denaturant curve
+- Delta 6-0_Rep[n]: Difference between B and A raw intensities
+- Range/Mean_Rep[n]: Delta 6-0_Rep[n] / (mean of raw intensities in curve)
+
+![CHalf Graph Output Guide](https://github.com/JC-Price/Chalf_public/blob/main/Graphics/CHalf%20Graph%20Output%20Guide.png)
