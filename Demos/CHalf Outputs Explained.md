@@ -6,12 +6,12 @@
             -[CONDITION]_Rep[n]_OUTPUT.csv - CHalf values and curve data for each Rep in a condition
             -[CONDITION]_Combined_OUTPUT.csv - Combination of rep data for each condition. Contains trimmed CHalf values and curve data. (toggleable)
             -[CONDITION]_Giant_OUTPUT.csv - Combination of all Combined_OUTPUT.csv's for a given run. (toggleable)
-            
+
         Graph Outputs: (toggleable, off by default)
             -[CONDITION]_Rep[n]==Index==[k]==Graph[.svg/.jpg/.png] - Graph of CHalf sigmoidal curves for proteins/peptides in Rep data
             -[CONDITION]_Combined==Index==[k]==Graph[.svg/.jpg/.png] - Graph of CHalf sigmoidal curves for proteins/peptides in Combined data
-            
-       Headers and Graph Components Explained: [Link](https://github.com/JC-Price/Chalf_public/blob/main/Demos/CHalf%20Outputs%20Headers.md)
+
+  Headers and Graph Components Explained: [Link](https://github.com/JC-Price/Chalf_public/blob/main/Demos/CHalf%20Outputs%20Headers.md)
 - Label Finder (Label Efficiency) - Calculates what percent of peptides/proteins in your sample were successfully tagged.
 
         Outputs: 
