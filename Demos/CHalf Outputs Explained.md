@@ -17,6 +17,7 @@
         Outputs: 
             -[CONDITION] Label Efficiency.csv : Summary table of label efficiency counts for a given rep.
             -[CONDITION] Tags.csv : List of tagged peptides.
+  Headers and File Components Explained: [Link](https://github.com/JC-Price/Chalf_public/blob/main/Demos/Label%20Finder%20Explanations.md)
 - Fitting Efficiency - Calculates what percent of peptides/proteins in your sample were fittable by a sigmoidal curve.
 
         Outputs:
@@ -31,6 +32,7 @@
             -[CONDITION] Fitted Peptides.csv : Table of lists of peptides that meet the various conditions for the fitting
                          counts. Used for reference.
             -[CONDITION] Removed Sites.csv : Table of peptides that failed the second fitting between label sites and combined label sites.
+Headers and File Components Explained: [Link]()
 
 - Combined Site - Compares CHalf values across conditions for shared peptides.
 
