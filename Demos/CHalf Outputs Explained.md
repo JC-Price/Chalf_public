@@ -32,7 +32,7 @@
             -[CONDITION] Fitted Peptides.csv : Table of lists of peptides that meet the various conditions for the fitting
                          counts. Used for reference.
             -[CONDITION] Removed Sites.csv : Table of peptides that failed the second fitting between label sites and combined label sites.
-Headers and File Components Explained: [Link]()
+Headers and File Components Explained: [Link](https://github.com/JC-Price/Chalf_public/blob/main/Demos/Fitting%20Efficiency%20Explanations.md)
 
 - Combined Site - Compares CHalf values across conditions for shared peptides.
 
