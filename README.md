@@ -109,7 +109,7 @@ Installation: Extract the zipped folder and run CHalf_v4.2.1.exe.
         Inputs: [CONDITION] Combined Label Sites.csv (from Fitting Efficiency)
 
         Outputs:
-            -[[NAME]] CRM Summary.csv - Combination of all CRM Stats.csv files into a single summary table.
+            -[[NAME]] RCS Summary.csv - Combination of all CRM Stats.csv files into a single summary table.
             -[ACCESSION] Combined Residue Map [.svg/.jpg/.png] - Graphs of CHalf values [y-axis] vs. label site [x-axis] for a given protein across conditions.
             -[ACCESSION] CRM Stats.csv - Statistical values for graphs. For reference.
 ## Instructions
