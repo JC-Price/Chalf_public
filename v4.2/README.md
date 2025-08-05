@@ -1,6 +1,6 @@
 
 # CHalf v4.2.2
-![alt text](https://github.com/JC-Price/Chalf_public/blob/main/Graphics/CHalf%20v4.2.2%20README%20Logo.png)
+![alt text](https://github.com/JC-Price/Chalf_public/blob/main/v4.2/Graphics/CHalf%20v4.2.2%20README%20Logo.png)
 
 CHalf is a protein stability research tool. CHalf uses peptide intensity information within a denaturation curve to calculate the denaturation midpoint (“CHalf”) of protein/peptide fragments.  The tool was designed for use with mass spectrometry based information and is currently seamless with PEAKS Studio style outputs.
 
@@ -25,7 +25,7 @@ Folding Assay and CHalf Release Paper: Coming Soon
 
 Citations:
 
-Hyer, C. D.; Lin, H.-J. L.; Haderlie, C. T.; Berg, M.; Price, J. C. CHalf: Folding Stability Made Simple. (Manuscript under review)
+Hyer, C. D., Lin, H. J. L., Haderlie, C. T., Berg, M., & Price, J. C. (2023). CHalf: Folding Stability Made Simple. Journal of Proteome Research, 22(2), 605-614.
 
 Lin, H.-J. L.; James, I.; Hyer, C. D.; Haderlie, C. T.; Zackrison, M. J.; Bateman, T. M.; Berg, M.; Park, J.-S.; Daley, S. A.; Zuniga Pina, N. R.; et al. Quantifying In Situ Structural Stabilities of Human Blood Plasma Proteins Using a Novel Iodination Protein Stability Assay. Journal of Proteome Research 2022. DOI: 10.1021/acs.jproteome.2c00323.
 
@@ -35,11 +35,11 @@ For inquiries about CHalf or to request access to the original Python source cod
 [Join our email list](https://forms.gle/QjgdJstsEWZRYM8K9) for updates on CHalf development and other tools. This will help you keep the most up to date version and get access to new features we will add on as we continue development.
 
 ## Table of Contents
-- [Installation](https://github.com/JC-Price/Chalf_public/blob/main/README.md#installation)
-- [Features](https://github.com/JC-Price/Chalf_public/blob/main/README.md#features)
-- [Instructions](https://github.com/JC-Price/Chalf_public/blob/main/README.md#instructions)
-- [Demo](https://github.com/JC-Price/Chalf_public/blob/main/README.md#demo)
-- [Support](https://github.com/JC-Price/Chalf_public/blob/main/README.md#support)
+- [Installation](https://github.com/JC-Price/Chalf_public/blob/main/v4.2,README.md#installation)
+- [Features](https://github.com/JC-Price/Chalf_public/blob/main/v4.2,README.md#features)
+- [Instructions](https://github.com/JC-Price/Chalf_public/blob/main/v4.2,README.md#instructions)
+- [Demo](https://github.com/JC-Price/Chalf_public/blob/main/v4.2,README.md#demo)
+- [Support](https://github.com/JC-Price/Chalf_public/blob/main/v4.2,README.md#support)
 
 ## Installation
 
@@ -233,7 +233,7 @@ Combined Residue Mapper:
 
 CHalf v4.2.1: https://youtu.be/RAtCNqzh-aw
 
-- Input Format: [File Download](https://github.com/JC-Price/Chalf_public/blob/main/Demos/CHalf%20Inputs%20Formatting%20Guide.xlsx)
+- Input Format: [File Download](https://github.com/JC-Price/Chalf_public/blob/main/v4.2,Demos/CHalf%20Inputs%20Formatting%20Guide.xlsx)
 - Basic Operatation: Coming Soon
 - Masterfile Editing: Coming Soon
 - Editing CHalf Defaults.csv: Coming Soon
@@ -244,11 +244,11 @@ CHalf v4.2.1: https://youtu.be/RAtCNqzh-aw
 	- Residue Mapper
 	- Combined Residue Mapper
 
-Outputs Explained In Depth: [Link](https://github.com/JC-Price/Chalf_public/blob/main/Demos/CHalf%20Outputs%20Explained.md)
+Outputs Explained In Depth: [Link](https://github.com/JC-Price/Chalf_public/blob/main/v4.2,Demos/CHalf%20Outputs%20Explained.md)
 
 For Working With Non-PEAKS Outputs:
 
-- CHalf: [Formatting Guide](https://github.com/JC-Price/Chalf_public/blob/main/Demos/CHalf%20Inputs%20Formatting%20Guide.xlsx) (Excel file to be downloaded)
+- CHalf: [Formatting Guide](https://github.com/JC-Price/Chalf_public/blob/main/v4.2,Demos/CHalf%20Inputs%20Formatting%20Guide.xlsx) (Excel file to be downloaded)
 
 	See also [CHalf Preprocessing Tools](https://github.com/JC-Price/Chalf_public/tree/main/CHalf%20Preprocesing%20Tools)
 - Other CHalf Tools: Coming Soon
@@ -264,11 +264,11 @@ Common Errors:
 
 - Label Finder Dictionary.csv not found. Please add to [PATH].
 
-    Solution: The dictionary file used by Label Finder is not in the CHalf directory or it is not named properly. In the case that the file is missing, download from here: [Download](https://github.com/JC-Price/Chalf_public/blob/main/Config%20Files/Label%20Finder%20Dictionary.csv)
+    Solution: The dictionary file used by Label Finder is not in the CHalf directory or it is not named properly. In the case that the file is missing, download from here: [Download](https://github.com/JC-Price/Chalf_public/blob/main/v4.2,Config%20Files/Label%20Finder%20Dictionary.csv)
 
 - CHalf Defaults.csv not found. Please add to folder.
 
-    Solution: The settings file used by CHalf is not in the CHalf directory or it is not named properly. In the case that the file is missing, download from here: [Download](https://github.com/JC-Price/Chalf_public/blob/main/Config%20Files/CHalf%20Defaults.csv)
+    Solution: The settings file used by CHalf is not in the CHalf directory or it is not named properly. In the case that the file is missing, download from here: [Download](https://github.com/JC-Price/Chalf_public/blob/main/v4.2,Config%20Files/CHalf%20Defaults.csv)
 
 - No input file or output directory selected.
 
