@@ -1,0 +1,10 @@
+{
+  "A": {
+    "new_start": 20,
+    "new_name": "X"
+  },
+  "B": {
+    "new_start": 101,
+    "new_name": "Y"
+  }
+}

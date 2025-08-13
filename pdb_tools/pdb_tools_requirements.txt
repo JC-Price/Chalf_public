@@ -1,0 +1,6 @@
+bio==1.7.1
+biopandas==0.4.1
+biopython==1.85
+PySide6==6.9.1
+python-dateutil==2.9.0.post0
+numpy==2.2.6
