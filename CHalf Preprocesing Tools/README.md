@@ -77,7 +77,7 @@ Directions for processing MS data using Fragpipe in preparation for running CHal
 2. Open ```FragToCHalf.exe```.
 3. Select your ```.raw``` or ```.mzML``` files and ensure that your Point values match your desired concentration gradient column names for CHalf.
 4. Specify your acquisition method for each file.
-5. Specify your condition name, and choose an ouptut directory.
+5. Specify your condition name, and choose an ouptut directory. It is essential that there are no spaces in any of the paths of any of the files or directories you use. Otherwise Fragpipe will not be able to run your data.
 6. Choose your Fragpipe method in the dropdown.
 7. Select a custom FASTA if this applies.
 8. Press run. Fragpipe will run headless and display its log in the FragToCHalf console. The Fragpipe project will be in your output directory as ```{condition}_FP```.
