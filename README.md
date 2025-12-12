@@ -11,7 +11,7 @@ Included with CHalf is a suite of tools that can be used to perform quality cont
 For information on previous versions, see [here](https://github.com/JC-Price/Chalf_public/blob/main/v4.2/README.md).
 
 ## Authors
-[Chad D. Hyer](https://www.linkedin.com/in/chad-hyer-833702162/), [Connor Hadderly](https://www.linkedin.com/in/connorthaderlie), Monica Berg, [Hsien-Jung Lavender Lin](https://www.linkedin.com/in/hsien-jung-lin-254538197), [John C. Price](https://www.linkedin.com/in/john-price-1ba26b35/)
+[Chad D. Hyer](https://www.linkedin.com/in/chadhyer/), [Connor Hadderly](https://www.linkedin.com/in/connorthaderlie), Monica Berg, [Hsien-Jung Lavender Lin](https://www.linkedin.com/in/hsien-jung-lin-254538197), [John C. Price](https://www.linkedin.com/in/john-price-1ba26b35/)
 
   
 ## Acknowledgements
