@@ -22,7 +22,7 @@ John C Price Lab Group
 
 Special thanks to Dr. Bradley R. Naylor for development assistance.
 
-We love [Fragpipe](), so we took some inspiration from their graphical interface as we designed ours. Our tools do very different things, but feel free to check out their work.
+We love [Fragpipe](https://fragpipe.nesvilab.org/), so we took some inspiration from their graphical interface as we designed ours. Our tools do very different things, but feel free to check out their work.
 
 DISCLAIMER: Some generative AI was used during development of CHalf's GUI. All CHalf core features were built by hand.
 
@@ -34,7 +34,7 @@ Lin, H.-J. L.; James, I.; Hyer, C. D.; Haderlie, C. T.; Zackrison, M. J.; Batema
 
 ## Contact
 
-For inquiries about CHalf or to request additional information, please use our GitHub or direct inquiries to jcprice@chem.byu.edu. We will do our best to respond in a timely fashion so you can use our software for your needs.
+For inquiries about CHalf or to request additional information, please use our GitHub or direct inquiries to jcprice@chem.byu.edu. We will do our best to respond in a timely fashion, so you can use our software for your needs.
 
 ## Table of Contents
 - [Installation](https://github.com/JC-Price/Chalf_public/blob/main/v4.2,README.md#installation)
