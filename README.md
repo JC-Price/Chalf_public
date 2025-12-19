@@ -1,7 +1,7 @@
 # CHalf v4.3
-![alt text](https://github.com/JC-Price/Chalf_public/blob/main/v4.2/Graphics/CHalf%20v4.2.2%20README%20Logo.png)
+![alt text](https://github.com/JC-Price/Chalf_public/blob/main/Graphics/v4.3/CHalf%20v4.3%20README%20Logo.png)
 
-CHalf is a protein stability research tool. CHalf uses peptide intensity information within a denaturation curve to calculate the denaturation midpoint (“CHalf”) of protein/peptide fragments.  The tool was designed for use with mass spectrometry based information and can accept peptide quantification files from any proteomics identification and quantification software with some attention to [formatting](https://github.com/JC-Price/Chalf_public/blob/fc574fafca57c2196174d111e46f9d5ba4452b7b/Demos%20and%20Documentation/formatting_guide.md).
+CHalf is a protein stability research tool. CHalf uses peptide intensity information within a denaturation curve to calculate the denaturation midpoint (“CHalf”) of protein/peptide fragments.  The tool was designed for use with mass spectrometry based information and can accept peptide quantification files from any proteomics identification and quantification software with some attention to [formatting](https://github.com/JC-Price/Chalf_public/blob/main/Demos%20and%20Documentation/formatting_guide.md).
 
 As proteins are subjected to a gradient of denaturing solutions (i.e. GdmCl) or temperatures, they unfold in varying amounts, exposing sites that cause precipitation (for thermal denaturation style experiments) or are labeled using tags such as iodine (for chemical denaturation style experiments).
 CHalf uses peptide signal intensities at these differing conentration points and produces a sigmoid curve. The midpoint of this sigmoid curve is the CHalf value and represents the relative folding stability of these protein/peptide fragments.
@@ -37,11 +37,11 @@ Lin, H.-J. L.; James, I.; Hyer, C. D.; Haderlie, C. T.; Zackrison, M. J.; Batema
 For inquiries about CHalf or to request additional information, please use our GitHub or direct inquiries to jcprice@chem.byu.edu. We will do our best to respond in a timely fashion, so you can use our software for your needs.
 
 ## Table of Contents
-- [Installation](https://github.com/JC-Price/Chalf_public/blob/main/v4.2,README.md#installation)
-- [Features](https://github.com/JC-Price/Chalf_public/blob/main/v4.2,README.md#features)
-- [Instructions](https://github.com/JC-Price/Chalf_public/blob/main/v4.2,README.md#instructions)
-- [Demo](https://github.com/JC-Price/Chalf_public/blob/main/v4.2,README.md#demo)
-- [Support](https://github.com/JC-Price/Chalf_public/blob/main/v4.2,README.md#support)
+- [Installation](https://github.com/JC-Price/Chalf_public/tree/main?tab=readme-ov-file#installation)
+- [Features](https://github.com/JC-Price/Chalf_public/tree/main?tab=readme-ov-file#featuress)
+- [Instructions](https://github.com/JC-Price/Chalf_public/tree/main?tab=readme-ov-file#instructions)
+- [Demo](https://github.com/JC-Price/Chalf_public/tree/main?tab=readme-ov-file#instructions)
+- [Support](https://github.com/JC-Price/Chalf_public/tree/main?tab=readme-ov-file#instructions)
 
 ## Installation
 
@@ -52,15 +52,15 @@ Version 4.3 - Excecuteable file with integrated tools and GUI. Does not require 
 Installation: Extract the zipped folder and run ```CHalf_v4_3.exe```. For proper use, please maintain the extracted folder structure. CHalf will rely on assets in ```concentration_columns```, ```core```, ```images```, and ```workflows``` folders for preparing your CHalf runs.
 
 Additional ways of installing and running CHalf:
-- [Running CHalf from an IDE and source code]()
-- [Building CHalf from source code as a standalone executable]()
-- [Running CHalf headless]()
+- [Running CHalf from an IDE and source code](https://github.com/JC-Price/Chalf_public/blob/main/v4.3/ide_build/running_chalf_by_ide.md)
+- [Building CHalf from source code as a standalone executable](https://github.com/JC-Price/Chalf_public/blob/main/v4.3/gui_build/building_chalf_gui.md)
+- [Running CHalf headless](https://github.com/JC-Price/Chalf_public/blob/main/Demos%20and%20Documentation/headless_chalf_guide.md)
 
 ## Features
 
 For all features, see the hyperlinked guides for additional information about how to properly use the module and understand their outputs.
 
-- [CHalf]() - Fits chemical/heat denature mass spec data to a sigmoid curve to calculate protein/peptide CHalf values.
+- [CHalf](https://github.com/JC-Price/Chalf_public/blob/main/Demos%20and%20Documentation/chalf_module_guide.md) - Fits chemical/heat denature mass spec data to a sigmoid curve to calculate protein/peptide CHalf values.
 
         Inputs:
             -Formatted peptide abundance .csv from any proteomics identification and quantification software.
@@ -73,7 +73,7 @@ For all features, see the hyperlinked guides for additional information about ho
         Graph Outputs: (toggleable, off by default)
             -{ACCESSION@PEPTIDE}.[svg/jpg/png] - Graph of CHalf sigmoid curves for proteins/peptides.
 
-- [Quality Control]() - Identifies condition-specific quality metrics for troubleshooting sample preparation or acquisition issues.
+- [Quality Control](https://github.com/JC-Price/Chalf_public/blob/main/Demos%20and%20Documentation/quality_control_module_guide.md) - Identifies condition-specific quality metrics for troubleshooting sample preparation or acquisition issues.
 
         Inputs:
             -Formatted peptide abundance .csv from any proteomics identification and quantification software.
@@ -83,7 +83,7 @@ For all features, see the hyperlinked guides for additional information about ho
         Output:
             -{CONDITION} Quality Control.csv - Contains fitting and labeling efficiency metrics from your CHalf run.
 
-- [Visualization Modules]() - Tools for helping you quickly identify changes in CHalf values in-between conditions and generating figures for presentations and publications.
+- [Visualization Modules](https://github.com/JC-Price/Chalf_public/blob/main/Demos%20and%20Documentation/visualization_modules_guide.md) - Tools for helping you quickly identify changes in CHalf values in-between conditions and generating figures for presentations and publications.
 
     - Quality Control Report - Compares Residue Mapper ouputs across conditions. Note: CRM performed in CHalf v4.2.2 if you opt to do Combined Site or if you perform it manually using the Other Tools Menu.
 
@@ -138,15 +138,15 @@ This section contains instructions for running CHalf after first opening the pro
 
 **Workflow Tab**
 
-![alt text](main_page.png)
+![Workflow tab image](https://github.com/JC-Price/Chalf_public/blob/main/Graphics/v4.3/main_page.png)
 
 *Workflow Management:*
 
-Workflows determine how CHalf will approach your data analysis. CHalf will default to the settings that we use for IPSA upon loading up the program. You can access other workflows by dropping ```.workflow``` files into the ```workflows``` directory contained in the same directory as ```CHalf.exe```. These workflows are defined by settings selected throughout the GUI. If you have defined a preset that you wish to use, you can save it as a workflow by pressing ```Save``` which will then prompt you to define the name of the preset. You can overwrite existing ```.workflow``` files to make changes to workflows. You can select other workflows in the dropdown menu, and then press ```Load``` to have the worklow settings apply throughout the GUI and the run. If you wish to see where ```.workflow``` files are saved, you can press ```Open Folder```. 
+Workflows determine how CHalf will approach your data analysis. CHalf will default to the settings that we use for IPSA upon loading up the program. You can access other workflows by dropping ```.workflow``` files into the ```workflows``` directory contained in the same directory as ```CHalf.exe```. These workflows are defined by settings selected throughout the GUI. If you have defined a preset that you wish to use, you can save it as a workflow by pressing ```Save``` which will then prompt you to define the name of the preset. You can overwrite existing ```.workflow``` files to make changes to workflows. You can select other workflows in the dropdown menu, and then press ```Load``` to have the worklow settings apply throughout the GUI and the run. If you wish to see where ```.workflow``` files are saved, you can press ```Open Folder```. For a detailed discussion of all parameters in a workflow, see the [Workflows Tutorial](https://github.com/JC-Price/Chalf_public/blob/main/Demos%20and%20Documentation/workflows_tutorial.md).
 
 *Input Selection:*
 
-CHalf takes inputs of ```.csv``` files with quantified peptide abundances from proteomics analysis softwares. Proper formatting is essential for CHalf to run correctly. For instructions on how you should format your input files see the [Foramtting Guide](https://github.com/JC-Price/Chalf_public/blob/fc574fafca57c2196174d111e46f9d5ba4452b7b/Demos%20and%20Documentation/formatting_guide.md). To add input files, press ```Add files```, after which CHalf will prompt you to add your properly formatted input files using the file explorer. Each added file will be added to the table with its associated file path, condition name, and conditions column preset. Files can be removed by highlighting the conditions in the table and pressing ```Remove selected files``` or ```Clear files``` to remove all inputs. Previously defined inputs can be loaded into CHalf using ```.manifest``` files which are generated from the table using ```Save as manifest``` or by CHalf being initialized in a project.
+CHalf takes inputs of ```.csv``` files with quantified peptide abundances from proteomics analysis softwares. Proper formatting is essential for CHalf to run correctly. For instructions on how you should format your input files see the [Foramtting Guide](https://github.com/JC-Price/Chalf_public/blob/main/Demos%20and%20Documentation/formatting_guide.md). To add input files, press ```Add files```, after which CHalf will prompt you to add your properly formatted input files using the file explorer. Each added file will be added to the table with its associated file path, condition name, and conditions column preset. Files can be removed by highlighting the conditions in the table and pressing ```Remove selected files``` or ```Clear files``` to remove all inputs. Previously defined inputs can be loaded into CHalf using ```.manifest``` files which are generated from the table using ```Save as manifest``` or by CHalf being initialized in a project.
 
 *Condition Definition:*
 
@@ -186,7 +186,7 @@ The CHalf tab is used to set the basic settings that will be used to calculate p
 
 
 *Experimental Options:*
-We experimented with these features along the way as we built ```CHalf v4.3```. Each of them has cases where they might be useful, but each of these cases were either just too niche or conceptually flawed to justify their full incorporation into CHalf (minus Mutation Search). As a result, these features are more prone to cause errors during calculation and may not fit as well into the full CHalf workflow. Properly using them also requires understanding their strengths and weaknesses, so use them at your own risk. For more discussion on how to use these features and on their rationale, see the [Experimental Options Guide](https://github.com/JC-Price/Chalf_public/blob/3b80c42da9707da77812db1828d6da7efc31f32c/Demos%20and%20Documentation/experimental_options_guide.md).
+We experimented with these features along the way as we built ```CHalf v4.3```. Each of them has cases where they might be useful, but each of these cases were either just too niche or conceptually flawed to justify their full incorporation into CHalf (minus Mutation Search). As a result, these features are more prone to cause errors during calculation and may not fit as well into the full CHalf workflow. Properly using them also requires understanding their strengths and weaknesses, so use them at your own risk. For more discussion on how to use these features and on their rationale, see the [Experimental Options Guide](https://github.com/JC-Price/Chalf_public/blob/main/Demos%20and%20Documentation/experimental_options_guide.md).
 
 **Quality Control Tab**
 
@@ -194,9 +194,9 @@ Quality control generates a concise report of how well your assay performed in t
 
 **Visualization Tab**
 
-CHalf's visualization tools are a powerful way of gaining protein- and site-specific insight at a proteomic scale. They are a good place to start when analyzing your proteomic data for identifying the impacts of changes in folding stability due to changes in experimental conditions and can help you save a lot of time and avoid being overwhelmed by your proteomic data. They produce some of the most useful outputs from CHalf that will enable you to do further hypothesis testing if you understand how and when to use each of the visualization tools. This section's goal is to provide you with enough basic instruction to use Groupings to properly make comparisons between conditions and answer questions. For more detailed information about what each visualization tool does see the [Visualization Modules Guide]().
+CHalf's visualization tools are a powerful way of gaining protein- and site-specific insight at a proteomic scale. They are a good place to start when analyzing your proteomic data for identifying the impacts of changes in folding stability due to changes in experimental conditions and can help you save a lot of time and avoid being overwhelmed by your proteomic data. They produce some of the most useful outputs from CHalf that will enable you to do further hypothesis testing if you understand how and when to use each of the visualization tools. This section's goal is to provide you with enough basic instruction to use Groupings to properly make comparisons between conditions and answer questions. For more detailed information about what each visualization tool does see the [Visualization Modules Guide](https://github.com/JC-Price/Chalf_public/blob/main/Demos%20and%20Documentation/visualization_modules_guide.md).
 
-![alt text](visualization_tab.png)
+![Visualization tab image](https://github.com/JC-Price/Chalf_public/blob/main/Graphics/v4.3/visualization_tab.png)
 
 Central to using the visualiation tools is understanding how to use groupings. First, you want to import the CHalf conditions that you want to use in the comparisons. You can use the dropdown to individually add conditions or can add all of them at once. You can also individually or completely remove these conditions from the table as well. For each condition added, it will be assigned to a comparison group. Each comparison group can only have one unique instance of each condition added. Trying to add more of the same condition to a group will result in the creation of additional groups. Within each group, there is can also only be one Reference Condition, with every other condition in the group being an Experimental Condition. The visualization tools will use the Reference Condition as the reference point for making comparisons to each Experimental Condition in the set. Visualization tools will be performed groupwise, so if you want to compare one condition across multiple condition groups, you can do so by properly assigning it to each group in the table. Modification of the table can only be done using the buttons in the ```Condition/Group Properties``` section. You can assign selected rows to groups and change group names using ```Set Group```. You can then assign these conditions to Experimental or Reference classes using the ```Set Experimental``` and ```Set Reference``` buttons. Colors of conditions can be controlled using the color assignment wizard accessed by pressing ```Set Color``` after selecting a condition. If no conditions are assigned to groups in the table, group-dependent visualization tools will not be run. Each of the tools can be run on completed CHalf outputs without having to rerun CHalf if the project structure is maintained, and you reload the manifest used in the original project.
 
@@ -205,11 +205,11 @@ Once you have chosen the correct settings and comparison methods for your analys
 
 The log automatically exports at the end of each CHalf run, but you can optionally export it to another location or can clear the console. Errors in the CHalf run will be reported in the log, so if something looks wrong with your outputs, be sure to check the log to understand what may have gone wrong.
 
-You can also optionally click ```Export Headless Run``` to export the needed files and commands to be used to run CHalf headless as a command line tool for batch processing. For more information on running CHalf headless, see [Running CHalf headless]().
+You can also optionally click ```Export Headless Run``` to export the needed files and commands to be used to run CHalf headless as a command line tool for batch processing. For more information on running CHalf headless, see [Running CHalf headless](https://github.com/JC-Price/Chalf_public/blob/main/Demos%20and%20Documentation/headless_chalf_guide.md).
 
 Now that your CHalf run is done, you can click ```Open``` to start looking at your outputs. Included in the next section is a suggested approach to looking at the results of your CHalf runs.
 
-![alt text](run_tab.png)
+![Run tab image](https://github.com/JC-Price/Chalf_public/blob/main/Graphics/v4.3/run_tab.png)
 
 **Examining Your CHalf Outputs**
 
@@ -225,8 +225,11 @@ Depending on what modules you chose to use during your CHalf run and what questi
 COMING SOON
 
 ## Support
-As we have developed CHalf, we have put a lot of effort into addressing possible errors that could occur when calcuating CHalf values or preparing other outputs. We have also tried to reduce room for user error. If you are experiencing errors, please refer to the Common Error section bellow before contacting the JC Price Lab for support. Most errors are a result of improperly selecting inputs or improperly specifying run conditions unique to your samples. Modifying CHalf or using nonstandard inputs runs the risk of raising unanticipated errors, so do so at your own risk. Before using nonstandard inputs or modifying CHalf, please review the demo section within this README.
+As we have developed CHalf, we have put a lot of effort into addressing possible errors that could occur when calcuating CHalf values or preparing other outputs. We have also tried to reduce room for user error. If you are experiencing errors, please refer to the Common Error section below before contacting the JC Price Lab for support. Most errors are a result of improperly selecting inputs or improperly specifying run conditions unique to your samples. Modifying CHalf or using nonstandard inputs runs the risk of raising unanticipated errors, so do so at your own risk. Before using nonstandard inputs or modifying CHalf, please review the demo section within this README.
 
-Common Errors:
+# Common Errors:
+We try to update this list as you or we find them, so please be patient as we continnue to build out this list.
 
-COMING SOON
+| Error | Keywords | Solution |
+| :--- | :--- | :--- |
+| Parallelization Error | `Current thread 0x00010dc4` / `The process "46264" not found` | Running CHalf again will usually fix this issue. If the issue persists, consider only using 1 core. |
