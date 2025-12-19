@@ -130,8 +130,8 @@ The Annotation File is a powerful feature for injecting custom markers (domain b
 **Technical Format:**
 The `.ann` file is a JSON-like text file that you can generate using any text editing software. CHalf reads this file and looks for specific variable names.
 
-### A. The `custom_annotation` Dictionary (Required)
-You must define a dictionary named `custom_annotation`.
+### A. The `custom_annotation` Dictionary (Optional)
+You may optionally define a dictionary named `custom_annotation`.
 * **Key:** Protein Accession ID (Exact match to accession in column, e.g., `P02768|ALBU_HUMAN`).
 * **Value:** A **List** of annotation dictionaries.
 
