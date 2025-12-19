@@ -27,6 +27,7 @@ The software includes three specific "Mappers," and two additional visualization
 * **Input Source:** `Combined Sites.csv` (Aggregated residue-level data)
 
 **Residue Mapper Output**
+
 ![Example residue mapper figure](https://github.com/JC-Price/Chalf_public/blob/main/Graphics/v4.3/residue_mapper_example.jpg)
 
 **Settings:**
@@ -50,6 +51,7 @@ The software includes three specific "Mappers," and two additional visualization
 * **Input Source:** `Combined Sites.csv` (Aggregated residue-level data)
 
 **Combined Residue Mapper Output**
+
 ![Example combined residue mapper figure](https://github.com/JC-Price/Chalf_public/blob/main/Graphics/v4.3/combined_residue_mapper_example.jpg)
 
 **Settings:**
@@ -71,9 +73,11 @@ The software includes three specific "Mappers," and two additional visualization
 * **Equation:** $\Delta C_{1/2} = C_{1/2} (Experimental) - C_{1/2} (Reference)$
 
 **Delta Mapper Output**
+
 ![Example delta mapper figure](https://github.com/JC-Price/Chalf_public/blob/main/Graphics/v4.3/delta_mapper_example.jpg)
 
 **Delta Mapper Distribution Figure**
+
 ![Example delta mapper distribution figure](https://github.com/JC-Price/Chalf_public/blob/main/Graphics/v4.3/delta_mapper_dist_example.jpg)
 
 **Settings:**
@@ -105,6 +109,7 @@ These parameters control the generation of the report.
 The **Combined Site** module is a dedicated visualization tool for plotting stability data from the `Sites.csv` files. It is distinct from the Residue Mapper and offers specific settings for comparing site-level stability.
 
 **Combined Site Output**
+
 ![Example combined site figure](https://github.com/JC-Price/Chalf_public/blob/main/Graphics/v4.3/combined_site_example.jpg)
 
 **Settings**
