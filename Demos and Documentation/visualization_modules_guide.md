@@ -27,7 +27,7 @@ The software includes three specific "Mappers," and two additional visualization
 * **Input Source:** `Combined Sites.csv` (Aggregated residue-level data)
 
 **Residue Mapper Output**
-![Example residue mapper figure](https://github.com/JC-Price/Chalf_public/tree/main/Graphics/v4.3/residue_mapper_example.jpg)
+![Example residue mapper figure](https://github.com/JC-Price/Chalf_public/blob/main/Graphics/v4.3/residue_mapper_example.jpg)
 
 **Settings:**
 * **Min / Max:** (`visualization.rm.min` / `.max`)
@@ -50,7 +50,7 @@ The software includes three specific "Mappers," and two additional visualization
 * **Input Source:** `Combined Sites.csv` (Aggregated residue-level data)
 
 **Combined Residue Mapper Output**
-![Example combined residue mapper figure](https://github.com/JC-Price/Chalf_public/tree/main/Graphics/v4.3/combined_residue_mapper_example.jpg)
+![Example combined residue mapper figure](https://github.com/JC-Price/Chalf_public/blob/main/Graphics/v4.3/combined_residue_mapper_example.jpg)
 
 **Settings:**
 * **Min / Max:** (`visualization.crm.min` / `.max`)
@@ -71,10 +71,10 @@ The software includes three specific "Mappers," and two additional visualization
 * **Equation:** $\Delta C_{1/2} = C_{1/2} (Experimental) - C_{1/2} (Reference)$
 
 **Delta Mapper Output**
-![Example delta mapper figure](https://github.com/JC-Price/Chalf_public/tree/main/Graphics/v4.3/delta_mapper_example.jpg)
+![Example delta mapper figure](https://github.com/JC-Price/Chalf_public/blob/main/Graphics/v4.3/delta_mapper_example.jpg)
 
 **Delta Mapper Distribution Figure**
-![Example delta mapper distribution figure](https://github.com/JC-Price/Chalf_public/tree/main/Graphics/v4.3/delta_mapper_dist_example.jpg)
+![Example delta mapper distribution figure](https://github.com/JC-Price/Chalf_public/blob/main/Graphics/v4.3/delta_mapper_dist_example.jpg)
 
 **Settings:**
 * **Min / Max:** (`visualization.dm.min` / `.max`)
@@ -90,7 +90,7 @@ The software includes three specific "Mappers," and two additional visualization
     * **Min Points:** (`visualization.dm.kde.min_pts`)
         * *(Default: 3)* The minimum number of shared data points required to generate this distribution.
 
-## D. Quality Control Report
+### D. Quality Control Report
 The Quality Control (QC) Report is a standalone HTML dashboard (`report.html`) that summarizes the statistical quality of your entire run. It provides interactive figures that allow you to assess fitting efficiency and reproducibility without opening multiple CSV files.
 
 **Settings:**
@@ -101,11 +101,11 @@ These parameters control the generation of the report.
 | **Generate Report** | `visualization.qc.report` | *(Default: True)* If enabled, generates the `report.html` file in your output directory. |
 | **Auto-Open** | `visualization.qc.open` | *(Default: False)* If enabled, automatically launches the report in your default web browser after processing. |
 
-## E. Combined Site Visualization
+### E. Combined Site Visualization
 The **Combined Site** module is a dedicated visualization tool for plotting stability data from the `Sites.csv` files. It is distinct from the Residue Mapper and offers specific settings for comparing site-level stability.
 
 **Combined Site Output**
-![Example combined site figure](https://github.com/JC-Price/Chalf_public/tree/main/Graphics/v4.3/combined_site_example.jpg)
+![Example combined site figure](https://github.com/JC-Price/Chalf_public/blob/main/Graphics/v4.3/combined_site_example.jpg)
 
 **Settings**
 These settings control the file output and axis scaling for the Combined Site plots.
