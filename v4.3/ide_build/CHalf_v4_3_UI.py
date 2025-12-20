@@ -2942,7 +2942,30 @@ class Ui_MainWindow(QMainWindow):
 
 
         self.verticalLayout_30.addLayout(self.horizontalLayout_39)
+        
+        self.horizontalLayout_cores = QHBoxLayout()
+        self.horizontalLayout_cores.setObjectName(u"horizontalLayout_cores")
+        
+        self.label_cores = QLabel(self.run_tab)
+        self.label_cores.setObjectName(u"label_cores")
+        self.label_cores.setText("Parallelization (Cores):")
+        self.horizontalLayout_cores.addWidget(self.label_cores)
 
+        self.cores_spinBox = QSpinBox(self.run_tab)
+        self.cores_spinBox.setObjectName(u"cores_spinBox")
+        self.cores_spinBox.setMinimum(-1)
+        self.cores_spinBox.setMaximum((os.cpu_count() - 1) or 1) # Validates against system cores
+        self.cores_spinBox.setValue(-1) # Default to max
+        self.horizontalLayout_cores.addWidget(self.cores_spinBox)
+
+        self.label_cores_helper = QLabel(self.run_tab)
+        self.label_cores_helper.setObjectName(u"label_cores_helper")
+        self.label_cores_helper.setText("(-1 = Max Available)")
+        self.horizontalLayout_cores.addWidget(self.label_cores_helper)
+        
+        self.horizontalLayout_cores.addStretch() # Pushes widgets to the left
+        self.verticalLayout_30.addLayout(self.horizontalLayout_cores)
+        
         self.horizontalLayout_61 = QHBoxLayout()
         self.horizontalLayout_61.setObjectName(u"horizontalLayout_61")
         self.run_start_pushButton = QPushButton(self.run_tab)
@@ -3289,12 +3312,17 @@ class Ui_MainWindow(QMainWindow):
     # retranslateUi
     
     def load_parameter(self, key, parameter):
-        possible_parameters = ['chalf', 'chalf.search.light', 'chalf.search.residues', 'chalf.filter.min', 'chalf.filter.max', 'chalf.filter.rsq', 'chalf.filter.ci_filter', 'chalf.filter.ci_value', 'chalf.filter.optimize', 'chalf.filter.sig_only', 'chalf.fitting.min_pts', 'chalf.fitting.outlier_trimming', 'chalf.fitting.outlier_cutoff', 'chalf.fitting.zero_criteria', 'chalf.graphing.graph', 'chalf.graphing.file_type', 'chalf.graphing.min', 'chalf.graphing.max', 'chalf.graphing.rsq', 'chalf.graphing.ci_filter', 'chalf.graphing.ci_value', 'chalf.experimental.sg.smooth', 'chalf.experimental.sg.window', 'chalf.experimental.sg.order', 'chalf.experimental.wf.window_fit', 'chalf.experimental.wf.window', 'chalf.experimental.ms.mutations', 'qc', 'qc.search.residues', 'qc.filter.min', 'qc.filter.max', 'qc.filter.rsq', 'qc.filter.ci_filter', 'qc.filter.ci_value', 'qc.filter.optimize', 'visualization.qc.report', 'visualization.qc.open', 'visualization.rm', 'visualization.rm.file_type', 'visualization.rm.min', 'visualization.rm.max', 'visualization.rm.trendlines.trendline', 'visualization.rm.trendlines.min', 'visualization.rm.trendlines.window', 'visualization.rm.other.all_curves', 'visualization.rm.other.reference_stats', 'visualization.rm.other.rm_trendline_stats', 'visualization.rm.other.mutation_search', 'visualization.rm.other.advanced', 'visualization.crm', 'visualization.crm.file_type', 'visualization.crm.min', 'visualization.crm.max', 'visualization.crm.trendlines.trendline', 'visualization.crm.trendlines.min', 'visualization.crm.trendlines.window', 'visualization.crm.other.all_curves', 'visualization.crm.other.reference_stats', 'visualization.crm.other.crm_trendline_stats','visualization.crm.other.shared_only', 'visualization.crm.other.mutation_search', 'visualization.crm.other.advanced', 'visualization.dm', 'visualization.dm.file_type', 'visualization.dm.min', 'visualization.dm.max', 'visualization.dm.trendlines.trendline', 'visualization.dm.trendlines.min', 'visualization.dm.trendlines.window', 'visualization.dm.kde.min_pts', 'visualization.dm.sig_filter', 'visualization.dm.sig_value', 'visualization.dm.other.all_curves', 'visualization.dm.other.reference_stats', 'visualization.dm.other.dm_trendline_stats', 'visualization.dm.other.mutation_search', 'visualization.dm.other.advanced', 'visualization.cs', 'visualization.cs.file_type', 'visualization.cs.min', 'visualization.cs.max']
+        possible_parameters = ['chalf', 'cores', 'chalf.search.light', 'chalf.search.residues', 'chalf.filter.min', 'chalf.filter.max', 'chalf.filter.rsq', 'chalf.filter.ci_filter', 'chalf.filter.ci_value', 'chalf.filter.optimize', 'chalf.filter.sig_only', 'chalf.fitting.min_pts', 'chalf.fitting.outlier_trimming', 'chalf.fitting.outlier_cutoff', 'chalf.fitting.zero_criteria', 'chalf.graphing.graph', 'chalf.graphing.file_type', 'chalf.graphing.min', 'chalf.graphing.max', 'chalf.graphing.rsq', 'chalf.graphing.ci_filter', 'chalf.graphing.ci_value', 'chalf.experimental.sg.smooth', 'chalf.experimental.sg.window', 'chalf.experimental.sg.order', 'chalf.experimental.wf.window_fit', 'chalf.experimental.wf.window', 'chalf.experimental.ms.mutations', 'qc', 'qc.search.residues', 'qc.filter.min', 'qc.filter.max', 'qc.filter.rsq', 'qc.filter.ci_filter', 'qc.filter.ci_value', 'qc.filter.optimize', 'visualization.qc.report', 'visualization.qc.open', 'visualization.rm', 'visualization.rm.file_type', 'visualization.rm.min', 'visualization.rm.max', 'visualization.rm.trendlines.trendline', 'visualization.rm.trendlines.min', 'visualization.rm.trendlines.window', 'visualization.rm.other.all_curves', 'visualization.rm.other.reference_stats', 'visualization.rm.other.rm_trendline_stats', 'visualization.rm.other.mutation_search', 'visualization.rm.other.advanced', 'visualization.crm', 'visualization.crm.file_type', 'visualization.crm.min', 'visualization.crm.max', 'visualization.crm.trendlines.trendline', 'visualization.crm.trendlines.min', 'visualization.crm.trendlines.window', 'visualization.crm.other.all_curves', 'visualization.crm.other.reference_stats', 'visualization.crm.other.crm_trendline_stats','visualization.crm.other.shared_only', 'visualization.crm.other.mutation_search', 'visualization.crm.other.advanced', 'visualization.dm', 'visualization.dm.file_type', 'visualization.dm.min', 'visualization.dm.max', 'visualization.dm.trendlines.trendline', 'visualization.dm.trendlines.min', 'visualization.dm.trendlines.window', 'visualization.dm.kde.min_pts', 'visualization.dm.sig_filter', 'visualization.dm.sig_value', 'visualization.dm.other.all_curves', 'visualization.dm.other.reference_stats', 'visualization.dm.other.dm_trendline_stats', 'visualization.dm.other.mutation_search', 'visualization.dm.other.advanced', 'visualization.cs', 'visualization.cs.file_type', 'visualization.cs.min', 'visualization.cs.max']
         if key not in possible_parameters: print(f'Problem at {key}. Ignoring this parameter')
         ### CHALF SETTINGS ###
         if key == 'chalf':
             try:
                 self.run_chalf_checkBox.setChecked(parameter)
+            except Exception as e:
+                print(f'Error with {key}: \n{e}')
+        elif key == 'cores':
+            try:
+                self.cores_spinBox.setValue(int(parameter))
             except Exception as e:
                 print(f'Error with {key}: \n{e}')
         elif key == 'chalf.search.light':
@@ -3882,6 +3910,7 @@ class Ui_MainWindow(QMainWindow):
     
                 f.write('### CHALF SETTINGS ###\n')
                 write_param("chalf", str(self.run_chalf_checkBox.isChecked()))
+                write_param("cores", str(self.cores_spinBox.value()))
     
                 f.write('\n## CHALF LIGHT SEARCH SETTINGS ##\n')
                 write_param("chalf.search.light", str(self.light_search_checkBox.isChecked()))
@@ -4043,6 +4072,7 @@ class Ui_MainWindow(QMainWindow):
     
                 f.write('### CHALF SETTINGS ###\n')
                 write_param("chalf", str(self.run_chalf_checkBox.isChecked()))
+                write_param("cores", str(self.cores_spinBox.value()))
     
                 f.write('\n## CHALF LIGHT SEARCH SETTINGS ##\n')
                 write_param("chalf.search.light", str(self.light_search_checkBox.isChecked()))

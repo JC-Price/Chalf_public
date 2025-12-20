@@ -65,6 +65,7 @@ from matplotlib.colors import is_color_like
 import matplotlib.ticker as ticker
 import altair as alt
 from datetime import timedelta
+from joblib import Parallel, delayed
 
 citation = '[NO_TIMESTAMP]Hyer, C. D.; Lin, H.-J. L.; Haderlie, C. T.; Berg, M.; Price, J. C.\n[NO_TIMESTAMP]CHalf: Folding Stability Made Simple.\n[NO_TIMESTAMP]Journal of Proteome Research 2023, 22 (2), 605-614.\n[NO_TIMESTAMP]DOI: 10.1021/acs.jproteome.2c00619.'
 
@@ -720,7 +721,7 @@ zero_criteria = 'remove' #replaces zeros in abundances with nan; 'keep' keeps th
 INITIAL_GUESS = True #attempts to do preprocessing to provide an informed initial guess for curve fitting to prevent fitting to local instead of global minima
 """
 
-def CHalf(file,condition,outdir,conc_dict=dict(zip(['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'],[0.0, 0.43, 0.87, 1.3, 1.74, 2.17, 2.61, 3.04, 3.48, 3.59])),TRIM_OUTLIERS=True,OUTLIER_CUTOFF=2,MINIMUM_PTS=4,LIGHT_SEARCH=True,search=list('YMCH'),WINDOW_FIT=False,nwindow=6,SAVGOL_FIT=False,SAVGOL_WINDOW=5,SAVGOL_ORDER=2,range_cutoff=(0,3.48),rsq_cutoff=0.8,rtr_cutoff=0.35,highest_criteria='rsq',HANDLE_CI_UNCERTAINTY=True,CUSTOM_FASTA=False,zero_criteria='remove',INITIAL_GUESS=True,GRAPH=False,file_type='jpg',graph_min=0,graph_max=3.48,graph_rsq=0.8,graph_ci_filter=False,graph_ci_value=0.35,KEEP_INSIGNIFICANT=None):
+def CHalf(file,condition,outdir,n_cores=1,conc_dict=dict(zip(['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'],[0.0, 0.43, 0.87, 1.3, 1.74, 2.17, 2.61, 3.04, 3.48, 3.59])),TRIM_OUTLIERS=True,OUTLIER_CUTOFF=2,MINIMUM_PTS=4,LIGHT_SEARCH=True,search=list('YMCH'),WINDOW_FIT=False,nwindow=6,SAVGOL_FIT=False,SAVGOL_WINDOW=5,SAVGOL_ORDER=2,range_cutoff=(0,3.48),rsq_cutoff=0.8,rtr_cutoff=0.35,highest_criteria='rsq',HANDLE_CI_UNCERTAINTY=True,CUSTOM_FASTA=False,zero_criteria='remove',INITIAL_GUESS=True,GRAPH=False,file_type='jpg',graph_min=0,graph_max=3.48,graph_rsq=0.8,graph_ci_filter=False,graph_ci_value=0.35,KEEP_INSIGNIFICANT=None):
     print(f'Reading {file}...')
     try:
         df = pd.read_csv(file)
@@ -732,6 +733,8 @@ def CHalf(file,condition,outdir,conc_dict=dict(zip(['0', '1', '2', '3', '4', '5'
     if GRAPH:
         graph_path = f'{path}/Graphs'
         os.makedirs(graph_path,exist_ok=True)
+    else:
+        graph_path = ''
     df.rename(columns={'Protein Accession':'Accession'},inplace=True)
     df.insert(0,'Accession@Peptide',df['Accession']+'@'+df['Peptide'])
     tmp_conc_dict = conc_dict
@@ -742,7 +745,13 @@ def CHalf(file,condition,outdir,conc_dict=dict(zip(['0', '1', '2', '3', '4', '5'
     conc_cols = list(conc_dict)
     
     print(f'Identifying label sites for residues {search}...')
-    df = df.apply(make_label_site_function,search=search,axis=1) #Add label site information
+    results = Parallel(n_jobs=n_cores)(delayed(make_label_site_function)(
+            row,
+            search
+        ) for index, row in df.iterrows())
+    #df = df.apply(make_label_site_function,search=search,axis=1) #Add label site information
+    clean_results = [r for r in results if r is not None]
+    df = pd.DataFrame(clean_results)
     column_order = ['Accession@Peptide', 'Accession', 'Peptide', 'Site Type', 'Residue Number', 'Label Site', 'Label Type'] + conc_cols + ['Start', 'End']
     if CUSTOM_FASTA: column_order = ['Accession@Peptide', 'Accession', 'Peptide', 'Mutation', 'Site Type', 'Residue Number', 'Label Site', 'Label Type'] + conc_cols + ['Start', 'End']
     df = df[column_order] #reorder columns
@@ -756,27 +765,46 @@ def CHalf(file,condition,outdir,conc_dict=dict(zip(['0', '1', '2', '3', '4', '5'
         df = df.apply(savgol_apply, conc_cols=conc_cols, window_length=SAVGOL_WINDOW, polyorder=SAVGOL_ORDER, axis=1)
         raw[conc_cols] = raw[conc_cols].apply(lambda x: (x-np.nanmin(x))/(np.nanmax(x)-np.nanmin(x)), axis=1)
     print('Normalizing intensities and calculating Spearman correlations...')
+    def norm_lambda(row,conc_cols,zero_criteria,concentrations):
+        pd.set_option('future.no_silent_downcasting', True)
+        row['End-Start'] = list(row[conc_cols].dropna())[-1] - list(row[conc_cols].dropna())[0] #last non nan point minus first non nan point 
+        if zero_criteria == 'remove':
+            row[conc_cols] = row[conc_cols].replace(0, np.nan).astype(float) #replace zero values with nan
+            diff = (np.nanmax(row[conc_cols])-np.nanmin(row[conc_cols]))
+            if diff == 0: row[conc_cols] = np.nan
+            else: row[conc_cols] = (row[conc_cols] - np.nanmin(row[conc_cols])) / diff #min-max normalize abundances of each peptide
+            row['fit_#non Zero'] = row[conc_cols].notna().sum()
+        elif zero_criteria == 'keep':
+            diff = (np.nanmax(row[conc_cols])-np.nanmin(row[conc_cols]))
+            if diff == 0: row[conc_cols] = np.nan
+            else: row[conc_cols] = (row[conc_cols] - np.nanmin(row[conc_cols])) / diff #min-max normalize abundances of each peptide
+            row['fit_#non Zero'] = (row[conc_cols] != 0).sum()
+        elif zero_criteria == 'impute':
+            row[conc_cols] = row[conc_cols].replace(0, np.nan).astype(float) #replace zero values with nan
+            diff = (np.nanmax(row[conc_cols])-np.nanmin(row[conc_cols]))
+            if diff == 0: row[conc_cols] = np.nan
+            else: row[conc_cols] = (row[conc_cols] - np.nanmin(row[conc_cols])) / diff #min-max normalize abundances of each peptide
+            row[conc_cols] = row[conc_cols].fillna(0) #replace nan values with 0
+            row['fit_#non Zero'] = (row[conc_cols] != 0).sum()
+        spear, p = spearmanr(row[conc_cols],concentrations)
+        row['Spearman'] = spear
+        row['P-value'] = p
+        return row
     df['Mean'] = df[conc_cols].mean(axis=1) #Mean of raw abundances
     df['RSD'] = df[conc_cols].std(axis=1) / df['Mean'] #RSD of raw abundances
     df['Range'] = df[conc_cols].max(axis=1) - df[conc_cols].min(axis=1) #Range of abundances max-min
     df['Relative Range'] = df['Range'] / df['Mean'] #Range of abundances divided by mean abundance
     df['% Change'] = df['Range'] / df[conc_cols].min(axis=1) #% Change from min to max abundance
-    df['End-Start'] = df[conc_cols].apply(lambda x: x.dropna()[-1] - x.dropna()[0], axis=1) #last non nan point minus first non nan point 
     df['fit_#non Zero'] = 0
-    if zero_criteria == 'remove':
-        df[conc_cols] = df[conc_cols].replace(0, np.nan) #replace zero values with nan
-        df[conc_cols] = df[conc_cols].apply(lambda x: (x-np.nanmin(x))/(np.nanmax(x)-np.nanmin(x)), axis=1) #min-max normalize abundances of each peptide
-        df['fit_#non Zero'] = df[conc_cols].notna().sum(axis = 1)
-    elif zero_criteria == 'keep':
-        df[conc_cols] = df[conc_cols].apply(lambda x: (x-np.nanmin(x))/(np.nanmax(x)-np.nanmin(x)), axis=1) #min-max normalize abundances of each peptide
-        df['fit_#non Zero'] = (df[conc_cols] != 0).sum(axis = 1)
-    elif zero_criteria == 'impute':
-        df[conc_cols] = df[conc_cols].replace(0, np.nan) #replace zero values with nan
-        df[conc_cols] = df[conc_cols].apply(lambda x: (x-np.nanmin(x))/(np.nanmax(x)-np.nanmin(x)), axis=1) #min-max normalize abundances of each peptide
-        df[conc_cols] = df[conc_cols].fillna(0) #replace nan values with 0
-        df['fit_#non Zero'] = (df[conc_cols] != 0).sum(axis = 1)
-    df[['Spearman','P-value']] = df[conc_cols].apply(lambda x: (spearmanr(x,concentrations)[0],spearmanr(x,concentrations)[1]),axis=1).apply(pd.Series)
-
+    results = Parallel(n_jobs=n_cores)(delayed(norm_lambda)(
+            row,
+            conc_cols,
+            zero_criteria,
+            concentrations
+        ) for index, row in df.iterrows())
+    #df = df.apply(make_label_site_function,search=search,axis=1) #Add label site information
+    clean_results = [r for r in results if r is not None]
+    df = pd.DataFrame(clean_results)
     #df[conc_cols] = df[conc_cols].fillna(0)
     
     if highest_criteria == 'rsq': None
@@ -784,19 +812,10 @@ def CHalf(file,condition,outdir,conc_dict=dict(zip(['0', '1', '2', '3', '4', '5'
     else: print('Fitting metric not recognized, defaulting to r squared maximization')
     
     data = pd.DataFrame()
-    total_rows = df.shape[0]
-    process_start_time = time.time()
     print('Fitting curves...')
-    count_p = 0
-    for index, row in df.iterrows():
-        progress_logger(
-            count_p,
-            total_rows,
-            description="CHalf Curve Fitting",
-            update_every_n_iterations=total_rows//20, # Adjust for your needs
-            start_time=process_start_time
-        )
-        count_p += 1
+    def CHalf_iteration(index, row):
+        pd.options.mode.chained_assignment = None
+        warnings.filterwarnings("ignore")
         columns = ['fit_#non Zero','fit_slope','fit_Curve_B','fit_Curve_A','fit_CHalf', 'fit_Curve_b', 'fit_B_stderror', 'fit_A_stderror', 'fit_CHalf_stderror','fit_b_stderror', 'fit_CHalf_ConfidenceInterval', 'fit_ratioTOrange','fit_CHalf_confidenceInterval_lowBound', 'fit_CHalf_confidenceInterval_upBound','fit_b_confidenceInterval', 'fit_b_confidenceInterval_lowBound','fit_b_confidenceInterval_upBound', 'fit_r_squared', 'fit_CHalf_normalized','trim_#pts', 'trim_slope', 'trim_B', 'trim_A', 'trim_CHalf', 'trim_b','trim_B_stderror', 'trim_A_stderror', 'trim_CHalf_stderror','trim_b_stderror', 'trim_CHalf_ConfidenceInterval', 'trim_ratioTOrange','trim_CHalf_confidenceInterval_lowBound','trim_CHalf_confidenceInterval_upBound', 'trim_b_confidenceInterval','trim_b_confidenceInterval_lowBound','trim_b_confidenceInterval_upBound', 'trim_r_squared','trim_CHalf_normalized']
         attempts = pd.DataFrame(columns=columns+['Window'])
         y = row[conc_cols].dropna()
@@ -804,7 +823,7 @@ def CHalf(file,condition,outdir,conc_dict=dict(zip(['0', '1', '2', '3', '4', '5'
         numPoints = len(y)
         count = row['fit_#non Zero']
         if count <= MINIMUM_PTS or np.isnan(count):
-            continue
+            return
         window = f'{min(x)}-{max(x)}'
         if INITIAL_GUESS:
             try: #Try to make inital guesses for curve fitting to avoid fitting incorrect local minima
@@ -816,7 +835,7 @@ def CHalf(file,condition,outdir,conc_dict=dict(zip(['0', '1', '2', '3', '4', '5'
         attempt = dict(zip(columns,[[numPoints]]+[[entry] for entry in attempt]))
         attempt.update({'Window':[window]})
         attempt = pd.DataFrame(attempt)
-        to_qc = attempt.loc[0]
+        to_qc = attempt.loc[0].copy()
         to_qc['Spearman P'] = row['P-value']
         to_qc['Spearman'] = row['Spearman']
         #Pick the better of the fits based on the preferred fitting metric (r squared maximization or confidence interval minimization)
@@ -872,7 +891,7 @@ def CHalf(file,condition,outdir,conc_dict=dict(zip(['0', '1', '2', '3', '4', '5'
                     attempt = dict(zip(columns,[[numPoints]]+[[entry] for entry in attempt]))
                     attempt.update({'Window':[window]})
                     attempt = pd.DataFrame(attempt)
-                    to_qc = attempt.loc[0]
+                    to_qc = attempt.loc[0].copy()
                     if to_qc['fit_r_squared'] >= to_qc['trim_r_squared'] or np.isnan(to_qc['trim_r_squared']): attempt['CHalf'] = to_qc['fit_CHalf']; attempt['r_squared'] = to_qc['fit_r_squared']; attempt['ratioTOrange'] = to_qc['fit_ratioTOrange']; attempt['CHalf_ConfidenceInterval'] = to_qc['fit_CHalf_ConfidenceInterval']; attempt['Slope'] = to_qc['fit_slope']; to_qc['Slope'] = to_qc['fit_slope']; attempt['Curve_b'] = to_qc['fit_Curve_b']; to_qc['Curve_b'] = to_qc['fit_Curve_b']; attempt['Baseline'] = to_qc['fit_Curve_A']; to_qc['Baseline'] = to_qc['fit_Curve_A']; attempt['Post-Transition'] = to_qc['fit_Curve_B']; to_qc['Post-Transition'] = to_qc['fit_Curve_B']; attempt['Trimmed'] = False
                     else: attempt['CHalf'] = to_qc['trim_CHalf']; attempt['r_squared'] = to_qc['trim_r_squared']; attempt['ratioTOrange'] = to_qc['trim_ratioTOrange']; attempt['CHalf_ConfidenceInterval'] = to_qc['trim_CHalf_ConfidenceInterval']; attempt['Slope'] = to_qc['trim_slope']; to_qc['Slope'] = to_qc['trim_slope']; attempt['Curve_b'] = to_qc['trim_b']; to_qc['Curve_b'] = to_qc['trim_b']; attempt['Baseline'] = to_qc['trim_A']; to_qc['Baseline'] = to_qc['trim_A']; attempt['Post-Transition'] = to_qc['trim_B']; to_qc['Post-Transition'] = to_qc['trim_B']; attempt['Trimmed'] = True
                     window_range_qc = max([min(x),range_cutoff[0]]) <= attempt.loc[0]['CHalf'] <= min([max(x),range_cutoff[1]])
@@ -894,7 +913,7 @@ def CHalf(file,condition,outdir,conc_dict=dict(zip(['0', '1', '2', '3', '4', '5'
             elif highest_criteria == 'ci': attempts = attempts.sort_values(by='CHalf_ConfidenceInterval',ascending=True).reset_index(drop=True)
             else: #default to rsq if failed
                 attempts = attempts.sort_values(by='r_squared',ascending=False).reset_index(drop=True)
-            to_append = attempts.loc[0]
+            to_append = attempts.loc[0].copy()
             if np.isnan(to_append['CHalf']): to_append['Window'] = np.nan #removing fake windows for when curve fitting fails in each window
             if GRAPH:
                 try:
@@ -909,7 +928,7 @@ def CHalf(file,condition,outdir,conc_dict=dict(zip(['0', '1', '2', '3', '4', '5'
                 except Exception as e:
                         print(f'Skipping graph. Error: {e}')
                         traceback.print_exc()
-            data = data._append(to_append.rename(index))
+            out = to_append.rename(index)
         else:
             attempt['Significant'] = True
             if GRAPH:
@@ -926,8 +945,14 @@ def CHalf(file,condition,outdir,conc_dict=dict(zip(['0', '1', '2', '3', '4', '5'
                 except Exception as e:
                     print(f'Skipping graph. Error: {row} {to_graph} {e}')
                     traceback.print_exc()
-            data = data._append(attempt.loc[0].rename(index))
-    
+            out = attempt.loc[0].copy().rename(index)
+        return out
+    results = Parallel(n_jobs=n_cores)(delayed(CHalf_iteration)(
+            index, 
+            row
+        ) for index, row in df.iterrows())
+    clean_results = [r for r in results if r is not None]
+    data = pd.DataFrame(clean_results)
     data.reset_index(inplace=True)
     try:
         data = data.drop(columns=['fit_#non Zero'])
@@ -977,22 +1002,12 @@ def CHalf(file,condition,outdir,conc_dict=dict(zip(['0', '1', '2', '3', '4', '5'
     concentrations = conc_dict.values()
     return conDF, sitesDF, concentrations
 
-def CombinedSites(sitesDF, condition, outdir, concentrations=[0.0, 0.43, 0.87, 1.3, 1.74, 2.17, 2.61, 3.04, 3.48, 3.59],TRIM_OUTLIERS=True,OUTLIER_CUTOFF=2,MINIMUM_PTS=4,range_cutoff=(0,3.48),rsq_cutoff=0.8,rtr_cutoff=0.35,highest_criteria='rsq',HANDLE_CI_UNCERTAINTY=True,KEEP_INSIGNIFICANT=True,CUSTOM_FASTA=False,INITIAL_GUESS=True,LIGHT_SEARCH=None,search=None,WINDOW_FIT=None,nwindow=None,SAVGOL_FIT=None,SAVGOL_WINDOW=None,SAVGOL_ORDER=None,GRAPH=None,file_type=None,graph_min=None,graph_max=None,graph_rsq=None,graph_ci_filter=None,graph_ci_value=None,zero_criteria=None):
+def CombinedSites(sitesDF, condition, outdir, n_cores=1, concentrations=[0.0, 0.43, 0.87, 1.3, 1.74, 2.17, 2.61, 3.04, 3.48, 3.59],TRIM_OUTLIERS=True,OUTLIER_CUTOFF=2,MINIMUM_PTS=4,range_cutoff=(0,3.48),rsq_cutoff=0.8,rtr_cutoff=0.35,highest_criteria='rsq',HANDLE_CI_UNCERTAINTY=True,KEEP_INSIGNIFICANT=True,CUSTOM_FASTA=False,INITIAL_GUESS=True,LIGHT_SEARCH=None,search=None,WINDOW_FIT=None,nwindow=None,SAVGOL_FIT=None,SAVGOL_WINDOW=None,SAVGOL_ORDER=None,GRAPH=None,file_type=None,graph_min=None,graph_max=None,graph_rsq=None,graph_ci_filter=None,graph_ci_value=None,zero_criteria=None):
     csDF = pd.DataFrame()
     print('Localizing stability values...')
     groups = sitesDF.groupby(by='Label@Accession')
-    total_rows = len(groups)
-    count_p = 0
-    process_start_time = time.time()
-    for label, group in groups:
-        progress_logger(
-            count_p,
-            total_rows,
-            description="Combined Sites Fittting",
-            update_every_n_iterations=total_rows//10, # Adjust for your needs
-            start_time=process_start_time
-        )
-        count_p += 1
+    def CombinedSites_iteration(label, group):
+        warnings.filterwarnings("ignore")
         if len(group) > 1:
             x = []
             y = []
@@ -1007,7 +1022,7 @@ def CombinedSites(sitesDF, condition, outdir, concentrations=[0.0, 0.43, 0.87, 1
             columns = ['fit_#non Zero','fit_slope','fit_Curve_B','fit_Curve_A','fit_CHalf', 'fit_Curve_b', 'fit_B_stderror', 'fit_A_stderror', 'fit_CHalf_stderror','fit_b_stderror', 'fit_CHalf_ConfidenceInterval', 'fit_ratioTOrange','fit_CHalf_confidenceInterval_lowBound', 'fit_CHalf_confidenceInterval_upBound','fit_b_confidenceInterval', 'fit_b_confidenceInterval_lowBound','fit_b_confidenceInterval_upBound', 'fit_r_squared', 'fit_CHalf_normalized','trim_#pts', 'trim_slope', 'trim_B', 'trim_A', 'trim_CHalf', 'trim_b','trim_B_stderror', 'trim_A_stderror', 'trim_CHalf_stderror','trim_b_stderror', 'trim_CHalf_ConfidenceInterval', 'trim_ratioTOrange','trim_CHalf_confidenceInterval_lowBound','trim_CHalf_confidenceInterval_upBound', 'trim_b_confidenceInterval','trim_b_confidenceInterval_lowBound','trim_b_confidenceInterval_upBound', 'trim_r_squared','trim_CHalf_normalized']
             numPoints = len(row_data)
             if numPoints <= MINIMUM_PTS:
-                continue
+                return
             if INITIAL_GUESS:
                 try: #Try to make inital guesses for curve fitting to avoid fitting incorrect local minima
                     A_guess, B_guess, Chalf_guess, b_guess = get_initial_sigmoid_guesses_robust(x, y)
@@ -1017,7 +1032,7 @@ def CombinedSites(sitesDF, condition, outdir, concentrations=[0.0, 0.43, 0.87, 1
             attempt = fitCHalf(x, y, numPoints, OUTLIER_CUTOFF, MINIMUM_PTS, A_guess=A_guess, B_guess=B_guess, Chalf_guess=Chalf_guess, b_guess=b_guess, INITIAL_GUESS=INITIAL_GUESS)
             attempt = dict(zip(columns,[[numPoints]]+[[entry] for entry in attempt]))
             attempt = pd.DataFrame(attempt)
-            to_qc = attempt.loc[0]
+            to_qc = attempt.loc[0].copy()
             #Pick the better of the fits based on the preferred fitting metric (r squared maximization or confidence interval minimization)
             if TRIM_OUTLIERS:
                 if highest_criteria == 'rsq':
@@ -1063,17 +1078,23 @@ def CombinedSites(sitesDF, condition, outdir, concentrations=[0.0, 0.43, 0.87, 1
                 attempt['Significant'] = True
             if CUSTOM_FASTA: attempt = attempt[['Label@Accession','Accession','Peptide','Mutation','Count','Site Type','Label Site','Label Type','Residue Number','CHalf','r_squared','ratioTOrange','CHalf_ConfidenceInterval','Slope','Curve_b','Baseline','Post-Transition','Significant']]
             else: attempt = attempt[['Label@Accession','Accession','Peptide','Count','Site Type','Label Site','Label Type','Residue Number','CHalf','r_squared','ratioTOrange','CHalf_ConfidenceInterval','Slope','Curve_b','Baseline','Post-Transition','Significant']]
-            csDF = csDF._append(attempt,ignore_index=True)
         else:
             group['Count'] = 1
             if CUSTOM_FASTA: group = group[['Label@Accession','Accession','Peptide','Mutation','Count','Site Type','Label Site','Label Type','Residue Number','CHalf','r_squared','ratioTOrange','CHalf_ConfidenceInterval','Slope','Curve_b','Baseline','Post-Transition','Significant']]
             else: group = group[['Label@Accession','Accession','Peptide','Count','Site Type','Label Site','Label Type','Residue Number','CHalf','r_squared','ratioTOrange','CHalf_ConfidenceInterval','Slope','Curve_b','Baseline','Post-Transition','Significant']]
-            csDF = csDF._append(group,ignore_index=True)
-        if HANDLE_CI_UNCERTAINTY: csDF['CHalf_ConfidenceInterval'] = csDF['CHalf_ConfidenceInterval'].mask(csDF['CHalf_ConfidenceInterval']>rtr_cutoff,np.nan)
-        if not KEEP_INSIGNIFICANT: csDF = csDF[csDF['Significant']] #remove insignificant sites from final output
-        csDF = csDF.sort_values(by=['Accession','Residue Number'])
-        if CUSTOM_FASTA: csDF['Mutation'].fillna('None',inplace=True)
-        csDF.to_csv(f'{outdir}/{condition}/{condition} Combined Sites.csv', index=False)
+            attempt = group.copy()
+        return attempt
+    results = Parallel(n_jobs=n_cores)(delayed(CombinedSites_iteration)(
+            label, 
+            group
+        ) for label, group in groups)
+    clean_results = [r for r in results if r is not None]
+    csDF = pd.concat(clean_results)
+    if HANDLE_CI_UNCERTAINTY: csDF['CHalf_ConfidenceInterval'] = csDF['CHalf_ConfidenceInterval'].mask(csDF['CHalf_ConfidenceInterval']>rtr_cutoff,np.nan)
+    if not KEEP_INSIGNIFICANT: csDF = csDF[csDF['Significant']] #remove insignificant sites from final output
+    csDF = csDF.sort_values(by=['Accession','Residue Number'])
+    if CUSTOM_FASTA: csDF['Mutation'].fillna('None',inplace=True)
+    csDF.to_csv(f'{outdir}/{condition}/{condition} Combined Sites.csv', index=False)
     return csDF
 
 def QualityControl(raw_file,combined_output_file,combined_sites_file,name,outdir,chalf_low=0,chalf_high=3.48,rsq=0.8,confint=0.35,highest_criteria='rsq',residues=['Y','H','M','C'],ci_filter=False): 
@@ -1277,7 +1298,7 @@ def mutation_extracter(row):
     else: row['marker_shape'] = 'v'; row['Label@Accession'] = '_'.join(row['Label@Accession'].split('_')[:-1])
     return row
 
-def CombinedResidueMapper(conditions_dict,output_dir,file_type='jpg',ylim=(0,3.6),TRENDLINE=True,window_size=3,count_requirement=5,ALLSITES=True,STATS_REFERENCE=True,TRENDLINE_STATS=False,SHARED_ONLY=False,custom_annotation=None,subset=None,CUSTOM_FASTA=False,advanced_options=None):
+def CombinedResidueMapper(conditions_dict,output_dir,n_cores=1,file_type='jpg',ylim=(0,3.6),TRENDLINE=True,window_size=3,count_requirement=5,ALLSITES=True,STATS_REFERENCE=True,TRENDLINE_STATS=False,SHARED_ONLY=False,custom_annotation=None,subset=None,CUSTOM_FASTA=False,advanced_options=None):
     #INITIAL TESTS to prevent errors
     print("Checking paramaters and aggregating conditions' data for Combined Residue Mapper...")
     conditions = []
@@ -1349,32 +1370,23 @@ def CombinedResidueMapper(conditions_dict,output_dir,file_type='jpg',ylim=(0,3.6
         if type(custom_annotation) != dict: print('Custom annotation is in the wrong format. Skipping this step.'); ANNOTATE = False
         else: annotations = list(custom_annotation); ANNOTATE = True
     groups = compDF.groupby(by='Accession')
-    total_rows = len(groups)
-    count_p = 0
-    process_start_time = time.time()
-    for accession, group in groups:
-        progress_logger(
-            count_p,
-            total_rows,
-            description="Combined Residue Mapper",
-            update_every_n_iterations=total_rows//10, # Adjust for your needs
-            start_time=process_start_time
-        )
-        count_p += 1
+    def CRM_iteration(accession, group):
+        warnings.filterwarnings("ignore")
+        perform_trendline_stats = TRENDLINE_STATS
         with sns.axes_style('whitegrid'):
             plt.close()
             fig, ax = plt.subplots()
-            if subset != None and accession not in subset: continue
+            if subset != None and accession not in subset: return
             count = 0
             group.sort_values(['Condition','Residue Number'],inplace=True)
             if SHARED_ONLY: group = group[group['Label@Accession'].duplicated(keep=False)] #only keeps label@accession values that are shared across conditions
             for condition in conditions:
                 if len(group[group['Condition']==condition]) < 1: continue
                 else: count += 1
-            if count < 2: continue
+            if count < 2: return
             if STATS_REFERENCE: outDF = group[['Label@Accession','Residue Number','Label Type']].drop_duplicates().sort_values('Residue Number')
-            else: TRENDLINE_STATS = False
-            if TRENDLINE_STATS: trendDF = pd.DataFrame()
+            else: perform_trendline_stats = False
+            if perform_trendline_stats: trendDF = pd.DataFrame()
             for condition in conditions:
                 cond_data = group[group['Condition']==condition]
                 x = cond_data['Residue Number']
@@ -1395,7 +1407,7 @@ def CombinedResidueMapper(conditions_dict,output_dir,file_type='jpg',ylim=(0,3.6
                 if TRENDLINE: #Creates trendlines on CRM outputs if there are enough points as specified above
                     if len(x.unique()) >= count_requirement:
                         sns.lineplot(x=x,y=avg,color=color_dict[condition],ax=ax)
-                        if TRENDLINE_STATS: trendDF = pd.concat([trendDF,pd.DataFrame({f'{condition}_rn':x,f'{condition}_avg':avg})],axis=1)
+                        if perform_trendline_stats: trendDF = pd.concat([trendDF,pd.DataFrame({f'{condition}_rn':x,f'{condition}_avg':avg})],axis=1)
             ax.set_xlabel('Residue Number',fontsize=12,weight=600)
             ax.set_ylabel('C½ [GdmCl]',fontsize=12,weight=600)
             ax.xaxis.set_major_formatter(ticker.StrMethodFormatter('{x:.0f}'))
@@ -1422,11 +1434,15 @@ def CombinedResidueMapper(conditions_dict,output_dir,file_type='jpg',ylim=(0,3.6
             ax.set_xlim((xmin,xmax))
             ax.set_ylim(ylim)
             plt.savefig(f'{output_dir}/{accession.replace("|","_")}.{file_type}', bbox_inches='tight')
-            if TRENDLINE_STATS: outDF = pd.concat([outDF,trendDF],axis=1)
+            if perform_trendline_stats: outDF = pd.concat([outDF,trendDF],axis=1)
             if STATS_REFERENCE: outDF.to_csv(f'{output_dir}/{accession.replace("|","_")}_stats.csv',index=False)
+    results = Parallel(n_jobs=n_cores)(delayed(CRM_iteration)(
+            accession, 
+            group
+        ) for accession, group in groups)
         
         
-def DeltaMapper(conditions_dict,output_dir,file_type='jpg',significance_cutoff_bool=False,significance_cutoff=None,n_cutoff=3,ylim=(-3.6,3.6),TRENDLINE=True,window_size=3,count_requirement=5,ALLSITES=True,STATS_REFERENCE=True,TRENDLINE_STATS=False,custom_annotation=None,subset=None,CUSTOM_FASTA=False,advanced_options=None):
+def DeltaMapper(conditions_dict,output_dir,n_cores=1,file_type='jpg',significance_cutoff_bool=False,significance_cutoff=None,n_cutoff=3,ylim=(-3.6,3.6),TRENDLINE=True,window_size=3,count_requirement=5,ALLSITES=True,STATS_REFERENCE=True,TRENDLINE_STATS=False,custom_annotation=None,subset=None,CUSTOM_FASTA=False,advanced_options=None):
     #INITIAL TESTS to prevent errors
     print("Checking paramaters and aggregating conditions' data for Delta Mapper...")
     conditions = []
@@ -1521,19 +1537,9 @@ def DeltaMapper(conditions_dict,output_dir,file_type='jpg',significance_cutoff_b
         else: annotations = list(custom_annotation); ANNOTATE = True
     groups = compDF.groupby(by='Accession')
     if len(comp_dict['reference']) < 1 or len(comp_dict['experimental']) < 1: print('Not enough conditions to run Delta Mapper. Skipping this step.'); return
-    total_rows = len(groups)
-    count_p = 0
-    process_start_time = time.time()
-    for accession, group in groups:
-        progress_logger(
-            count_p,
-            total_rows,
-            description="Delta Mapper",
-            update_every_n_iterations=total_rows//10, # Adjust for your needs
-            start_time=process_start_time
-        )
-        count_p += 1
-        if subset != None and accession not in subset: continue
+    def DM_iteration(accession, group):
+        warnings.filterwarnings("ignore")
+        if subset != None and accession not in subset: return
         if CUSTOM_FASTA:
             mutation_sites = list(set(group[group['Mutation']!='None']['Residue Number'].to_list()))
         referenceDF = group[group['Type'] == 'reference'].copy()
@@ -1577,7 +1583,7 @@ def DeltaMapper(conditions_dict,output_dir,file_type='jpg',significance_cutoff_b
                 plt.suptitle(accession,fontsize=14,weight=600)
                 plt.tight_layout()
                 plt.savefig(f'{output_dir}/{accession.replace("|","_")} ({reference} vs {condition}) Distribution Comparison.{file_type}')
-        if len(referenceDF) == 0: continue
+        if len(referenceDF) == 0: return
         with sns.axes_style('whitegrid'):
             plt.close()
             fig, ax = plt.subplots()
@@ -1597,7 +1603,7 @@ def DeltaMapper(conditions_dict,output_dir,file_type='jpg',significance_cutoff_b
                     if len(x.unique()) >= count_requirement:
                         sns.lineplot(x=x,y=avg,color=color_dict[condition],ax=ax)
                         if TRENDLINE_STATS: trendDF = pd.concat([trendDF,pd.DataFrame({f'{condition}_rn':x,f'{condition}_avg':avg})],axis=1)
-            if count == 0: continue
+            if count == 0: return
             ax.set_title(accession,fontsize=14,weight=600)
             ax.legend(fontsize=12,bbox_to_anchor =(0.5,-0.32), loc='lower center', ncol=count)#bbox_to_anchor=(1.05, 1.0), loc='upper left')
             ax.set_title(accession,fontsize=14,weight=600)
@@ -1626,6 +1632,11 @@ def DeltaMapper(conditions_dict,output_dir,file_type='jpg',significance_cutoff_b
             ax.tick_params(axis='both', which='major', labelsize=12)
 
             plt.savefig(f'{output_dir}/{accession.replace("|","_")}_condition_comparison.{file_type}', bbox_inches='tight')
+    results = Parallel(n_jobs=n_cores)(delayed(DM_iteration)(
+            accession, 
+            group
+        ) for accession, group in groups)
+        
 
 def create_interactive_kde_plot(csv_file, color, condition_name, x_min=0, x_max=3.6, stepsize=500):
     """
@@ -1830,7 +1841,7 @@ def generate_qc_report(conditions_dict, output_dir, open_on_completion=False):
             print(f"Error opening file: {e}")
             traceback.print_exc()
 
-def ResidueMapper(file,output_dir,file_type='jpg',ylim=(0,3.6),TRENDLINE=True,window_size=3,count_requirement=5,ALLSITES=True,STATS_REFERENCE=True,TRENDLINE_STATS=False,custom_annotation=None,subset=None,CUSTOM_FASTA=False,advanced_options=None):
+def ResidueMapper(file,output_dir,n_cores=1,file_type='jpg',ylim=(0,3.6),TRENDLINE=True,window_size=3,count_requirement=5,ALLSITES=True,STATS_REFERENCE=True,TRENDLINE_STATS=False,custom_annotation=None,subset=None,CUSTOM_FASTA=False,advanced_options=None):
     #INITIAL TESTS to prevent errors
     print("Performing Residue Mapper...")
     compDF = pd.DataFrame()
@@ -1890,22 +1901,12 @@ def ResidueMapper(file,output_dir,file_type='jpg',ylim=(0,3.6),TRENDLINE=True,wi
     color_map = dict(zip(label_types, colors))
 
     groups = compDF.groupby(by='Accession')
-    total_rows = len(groups)
-    count_p = 0
-    process_start_time = time.time()
-    for accession, group in groups:
-        progress_logger(
-            count_p,
-            total_rows,
-            description="Residue Mapper",
-            update_every_n_iterations=total_rows//10, # Adjust for your needs
-            start_time=process_start_time
-        )
-        count_p += 1
+    def RM_iteration(accession, group):
+        warnings.filterwarnings("ignore")
         with sns.axes_style('whitegrid'):
             plt.close()
             fig, ax = plt.subplots()
-            if subset != None and accession not in subset: continue
+            if subset != None and accession not in subset: return
             
             group.sort_values('Residue Number',inplace=True)
             
@@ -2004,6 +2005,10 @@ def ResidueMapper(file,output_dir,file_type='jpg',ylim=(0,3.6),TRENDLINE=True,wi
             plt.savefig(f'{output_dir}/{accession.replace("|","_")}.{file_type}', bbox_inches='tight')
             if TRENDLINE_STATS: outDF = pd.concat([outDF,trendDF],axis=1)
             if STATS_REFERENCE: outDF.to_csv(f'{output_dir}/{accession.replace("|","_")}_stats.csv',index=False)
+    results = Parallel(n_jobs=n_cores)(delayed(RM_iteration)(
+            accession, 
+            group
+        ) for accession, group in groups)
 
 def get_quality_control_default_args():
     """
@@ -2380,11 +2385,8 @@ def get_rm_default_args():
     """
     Extracts default arguments from the ResidueMapper function definition.
     """
-    # Dummy ResidueMapper function for introspection
-    def ResidueMapper_dummy(file,output_dir,file_type='jpg',ylim=(0,3.6),TRENDLINE=True,window_size=3,count_requirement=5,ALLSITES=True,STATS_REFERENCE=True,TRENDLINE_STATS=False,custom_annotation=None,subset=None,CUSTOM_FASTA=False,advanced_options=None):
-        pass
 
-    signature = inspect.signature(ResidueMapper_dummy)
+    signature = inspect.signature(ResidueMapper)
     defaults = {
         param.name: param.default
         for param in signature.parameters.values()
@@ -2503,40 +2505,55 @@ def get_cs_default_args():
 
 def prepare_combined_site_arguments(params: 'ParameterDict'):
     """
-    Extracts CombinedSite-specific parameters from a ParameterDict, specifically focusing on
-    'file_type', 'min', and 'max' from 'visualization.cs', and uses default values for others.
-
-    Args:
-        params: An instance of ParameterDict containing workflow parameters,
-                typically structured like params.visualization.cs.
-
-    Returns:
-        A dictionary of arguments ready to be passed to the CombinedSite function
-        using the **kwargs syntax.
+    Extracts CombinedSite-specific parameters from a ParameterDict using a mappings dict.
+    Maps file_type, min, and max from the workflow, then combines min/max into ylim.
+    Ensures n_cores is NOT included to avoid duplicate argument errors.
     """
     cs_args = {}
     default_cs_args = get_cs_default_args()
+    
+    # default_cs_args contains 'ylim', but we need individual defaults for min/max
+    default_ylim = default_cs_args.get('ylim', (0, 3.6))
 
-    # Initialize with all default arguments for CombinedSite
-    cs_args.update(default_cs_args)
+    # Define mappings for ALL relevant CS parameters in the workflow
+    mappings = {
+        'visualization.cs.file_type': 'file_type',
+        'visualization.cs.min': 'min',  # Intermediate key
+        'visualization.cs.max': 'max'   # Intermediate key
+    }
 
-    # Override defaults with values explicitly read from workflow file
-    # 1. file_type
-    file_type_val = params.visualization.cs.file_type
-    if file_type_val is not None:
-        cs_args['file_type'] = file_type_val
+    # Iterate and populate cs_args
+    for param_path, arg_name in mappings.items():
+        try:
+            current_value = params
+            for part in param_path.split('.'):
+                current_value = getattr(current_value, part)
+            cs_args[arg_name] = current_value
+        except AttributeError:
+            # Handle defaults
+            if arg_name == 'file_type':
+                print(f"Warning: Parameter '{param_path}' not found. Using default for '{arg_name}' ('{default_cs_args.get(arg_name)}')")
+                cs_args[arg_name] = default_cs_args.get(arg_name)
+            elif arg_name == 'min':
+                print(f"Warning: Parameter '{param_path}' not found. Using default for '{arg_name}' ('{default_ylim[0]}')")
+                cs_args[arg_name] = default_ylim[0]
+            elif arg_name == 'max':
+                print(f"Warning: Parameter '{param_path}' not found. Using default for '{arg_name}' ('{default_ylim[1]}')")
+                cs_args[arg_name] = default_ylim[1]
 
-    # 2. ylim (min and max)
-    min_val = params.visualization.cs.min
-    max_val = params.visualization.cs.max
-
-    if min_val is not None and max_val is not None:
-        cs_args['ylim'] = (min_val, max_val)
+    # Construct the 'ylim' tuple required by CombinedSite
+    # We use .get() here in case the mapping loop completely failed (though defaults handle valid keys)
+    if 'min' in cs_args and 'max' in cs_args:
+        cs_args['ylim'] = (cs_args['min'], cs_args['max'])
+    
+    # Clean up intermediate keys that CombinedSite does not accept
+    cs_args.pop('min', None)
+    cs_args.pop('max', None)
 
     return cs_args
 
 
-def CombinedSite(conditions_dict, output_dir, file_type='jpg', ylim=(0,3.6)):
+def CombinedSite(conditions_dict, output_dir, n_cores=1, file_type='jpg', ylim=(0,3.6)):
     """
     Generates boxplots for Label@Accession groups across different conditions,
     using seaborn. It expects '{name} Sites.csv' files as input.
@@ -2609,23 +2626,11 @@ def CombinedSite(conditions_dict, output_dir, file_type='jpg', ylim=(0,3.6)):
         return
 
     groups = compDF.groupby(by='Label@Accession')
-    total_groups = len(groups)
-    count_p = 0
-    process_start_time = time.time()
 
-    print(f'Generating {total_groups} Combined Site boxplots...')
-    summary_data_rows = [] # To collect data for the output CSV
-
-    for label_accession, group_data in groups:
-        progress_logger(
-            count_p,
-            total_groups,
-            description="Combined Site Plotting",
-            update_every_n_iterations=max(1, total_groups // 20),
-            start_time=process_start_time
-        )
-        count_p += 1
-
+    print('Generating Combined Site boxplots...')
+    
+    def CS_iteration(label_accession, group_data):
+        warnings.filterwarnings("ignore")
         # Prepare summary row for CSV
         row_summary = {'Label@Accession': label_accession}
         # Extract Label Type, Label Site, Accession, Residue Number
@@ -2634,53 +2639,64 @@ def CombinedSite(conditions_dict, output_dir, file_type='jpg', ylim=(0,3.6)):
         row_summary['Label Site'] = parts[1] if len(parts) > 1 else np.nan
         row_summary['Accession'] = '_'.join(parts[2:]) if len(parts) > 2 else np.nan
         row_summary['Residue Number'] = group_data['Residue Number'].iloc[0] if not group_data.empty and 'Residue Number' in group_data.columns else np.nan
+        
+        # Check if multiple conditions have data points
+        generate_plot = group_data['Condition'].nunique() > 1
 
-        # Generate plot for each Label@Accession group
+        # Generate plot for each Label@Accession group only if condition is met
         plt.close('all') # Close all existing figures to prevent memory issues
-        fig, ax = plt.subplots(figsize=(8, 6))
-
-        with sns.axes_style('whitegrid'):
-            # Create the boxplot - using hue='Condition' for separate boxes and automatic coloring
-            sns.boxplot(data=group_data, x='Condition', y='CHalf', ax=ax,
-                        order=conditions_order,
-                        showfliers=False, # Do not show outliers in boxplot itself
-                        linewidth=1.0)
-
-            # Add individual data points (swarmplot)
-            sns.swarmplot(data=group_data, x='Condition', y='CHalf', ax=ax,
-                          color='black', size=4, dodge=True, zorder=5) # dodge=True for swarmplot on top of boxplot
-
-            ax.set_xlabel('Condition', fontsize=12, weight='bold')
-            ax.set_ylabel('C½ [GdmCl]', fontsize=12, weight='bold')
-            ax.tick_params(axis='both', which='major', labelsize=10)
-            ax.set_title(label_accession, fontsize=14, weight='bold')
-            ax.set_ylim(ylim)
-
-            plt.tight_layout()
-            # Sanitize filename to remove invalid characters
-            safe_label_accession = re.sub(r'[\\/:*?"<>|]', '_', label_accession)
-            output_filepath = os.path.join(output_dir, f'{safe_label_accession} Boxplot.{file_type}')
-            plt.savefig(output_filepath, bbox_inches='tight', dpi=300) # Save with higher DPI
-            plt.close(fig) # Explicitly close the figure to free memory
-
-            # Populate summary row with statistics for each condition
-            for condition in conditions_order:
-                cond_subset_df = group_data[group_data['Condition'] == condition]['CHalf'].dropna()
-                if not cond_subset_df.empty:
-                    row_summary[f'{condition}_CHalf_mean'] = cond_subset_df.mean()
-                    row_summary[f'{condition}_CHalf_median'] = cond_subset_df.median()
-                    row_summary[f'{condition}_CHalf_std'] = cond_subset_df.std()
-                    row_summary[f'{condition}_CHalf_count'] = cond_subset_df.count()
-                    row_summary[f'{condition}_CHalf_min'] = cond_subset_df.min()
-                    row_summary[f'{condition}_CHalf_max'] = cond_subset_df.max()
-                    row_summary[f'{condition}_CHalf_Q1'] = cond_subset_df.quantile(0.25)
-                    row_summary[f'{condition}_CHalf_Q3'] = cond_subset_df.quantile(0.75)
-                else:
-                    # Fill with NaN if no data for this condition and site
-                    for stat in ['mean', 'median', 'std', 'count', 'min', 'max', 'Q1', 'Q3']:
-                        row_summary[f'{condition}_CHalf_{stat}'] = np.nan
-        summary_data_rows.append(row_summary)
-
+        
+        if generate_plot:
+            fig, ax = plt.subplots(figsize=(8, 6))
+    
+            with sns.axes_style('whitegrid'):
+                # Create the boxplot - using hue='Condition' for separate boxes and automatic coloring
+                sns.boxplot(data=group_data, x='Condition', y='CHalf', ax=ax,
+                            order=conditions_order,
+                            showfliers=False, # Do not show outliers in boxplot itself
+                            linewidth=1.0)
+    
+                # Add individual data points (swarmplot)
+                sns.swarmplot(data=group_data, x='Condition', y='CHalf', ax=ax,
+                              color='black', size=4, dodge=True, zorder=5) # dodge=True for swarmplot on top of boxplot
+    
+                ax.set_xlabel('Condition', fontsize=12, weight='bold')
+                ax.set_ylabel('C½ [GdmCl]', fontsize=12, weight='bold')
+                ax.tick_params(axis='both', which='major', labelsize=10)
+                ax.set_title(label_accession, fontsize=14, weight='bold')
+                ax.set_ylim(ylim)
+    
+                plt.tight_layout()
+                # Sanitize filename to remove invalid characters
+                safe_label_accession = re.sub(r'[\\/:*?"<>|]', '_', label_accession)
+                output_filepath = os.path.join(output_dir, f'{safe_label_accession} Boxplot.{file_type}')
+                plt.savefig(output_filepath, bbox_inches='tight', dpi=300) # Save with higher DPI
+                plt.close(fig) # Explicitly close the figure to free memory
+    
+                # Populate summary row with statistics for each condition
+                for condition in conditions_order:
+                    cond_subset_df = group_data[group_data['Condition'] == condition]['CHalf'].dropna()
+                    if not cond_subset_df.empty:
+                        row_summary[f'{condition}_CHalf_mean'] = cond_subset_df.mean()
+                        row_summary[f'{condition}_CHalf_median'] = cond_subset_df.median()
+                        row_summary[f'{condition}_CHalf_std'] = cond_subset_df.std()
+                        row_summary[f'{condition}_CHalf_count'] = cond_subset_df.count()
+                        row_summary[f'{condition}_CHalf_min'] = cond_subset_df.min()
+                        row_summary[f'{condition}_CHalf_max'] = cond_subset_df.max()
+                        row_summary[f'{condition}_CHalf_Q1'] = cond_subset_df.quantile(0.25)
+                        row_summary[f'{condition}_CHalf_Q3'] = cond_subset_df.quantile(0.75)
+                    else:
+                        # Fill with NaN if no data for this condition and site
+                        for stat in ['mean', 'median', 'std', 'count', 'min', 'max', 'Q1', 'Q3']:
+                            row_summary[f'{condition}_CHalf_{stat}'] = np.nan
+            return row_summary
+    
+    results = Parallel(n_jobs=n_cores)(delayed(CS_iteration)(
+            label_accession,
+            group_data
+        ) for label_accession, group_data in groups)
+    
+    summary_data_rows = [r for r in results if r is not None]
     # Generate a summary CSV
     if summary_data_rows:
         summary_df = pd.DataFrame(summary_data_rows)
@@ -2719,6 +2735,26 @@ def main(args):
     manifest = read_manifest(manifest_file)
     if args.visual: vis_config = read_vis(vis_config_file, working_dir)
     ''' EXTRACT CHALF RUN PARAMATERS '''
+    try:
+        max_cores = max(1, os.cpu_count() - 1)
+        n_cores = params.cores
+        if n_cores == -1: 
+            n_cores = max_cores
+        elif n_cores == 0: 
+            n_cores = 1
+            print('Cores set at 0. Defaulting to single core.')
+        elif n_cores > max_cores:
+            n_cores = max_cores
+            print(f'Number of cores ({n_cores}) specified exceeds maximum cores. Defaulting to max cores.')
+        elif type(n_cores) != int:
+            n_cores = 1
+            print('Number of cores not specified. Defaulting to single core.')
+        else:
+            n_cores = 1
+        print(f'Running on {n_cores} cores...')
+    except:
+        n_cores = 1
+        print('Number of cores not specified. Defaulting to single core.')
     try:
         CHALF = len(params.chalf) > 1
     except (AttributeError, TypeError):
@@ -2802,8 +2838,8 @@ def main(args):
         print(f'Processing {condition} ({index+1}/{total_runs}):')
         if CHALF:
             try:
-                conDF, sitesDF, concentrations = CHalf(file=file, condition=condition, outdir=working_dir, conc_dict=conc_dict, **chalf_kwargs)
-                csDF = CombinedSites(sitesDF=sitesDF, condition=condition, outdir=working_dir, concentrations=concentrations, **chalf_kwargs)
+                conDF, sitesDF, concentrations = CHalf(file=file, condition=condition, outdir=working_dir, conc_dict=conc_dict, n_cores=n_cores, **chalf_kwargs)
+                csDF = CombinedSites(sitesDF=sitesDF, condition=condition, outdir=working_dir, concentrations=concentrations, n_cores=n_cores, **chalf_kwargs)
             except Exception as e:
                 print(f'Skipping CHalf for {condition}. Error: {e}')
                 traceback.print_exc()
@@ -2817,7 +2853,7 @@ def main(args):
         if RM:
             try:
                 root = f'{working_dir}/{condition}'
-                ResidueMapper(file=f'{root}/{condition} Combined Sites.csv', output_dir=f'{root}/Residue Mapper', **rm_kwargs)
+                ResidueMapper(file=f'{root}/{condition} Combined Sites.csv', output_dir=f'{root}/Residue Mapper', n_cores=n_cores, **rm_kwargs)
             except Exception as e:
                 print(f'Skipping Residue Mapper for {condition}. Error: {e}')
                 traceback.print_exc()
@@ -2846,7 +2882,7 @@ def main(args):
                     conditions_dict = vis_config[group]
                     output_dir = f'{working_dir}/{group} Comparisons/Combined Residue Mapper'
                     os.makedirs(output_dir,exist_ok=True)
-                    CombinedResidueMapper(conditions_dict=conditions_dict, output_dir=output_dir, **crm_kwargs)
+                    CombinedResidueMapper(conditions_dict=conditions_dict, output_dir=output_dir, n_cores=n_cores, **crm_kwargs)
                 except Exception as e:
                     print(f'Skipping runnning {group} in Combined Residue Mapper. Error: {e}')
                     traceback.print_exc()
@@ -2861,7 +2897,7 @@ def main(args):
                     conditions_dict = vis_config[group]
                     output_dir = f'{working_dir}/{group} Comparisons/Delta Mapper'
                     os.makedirs(output_dir,exist_ok=True)
-                    DeltaMapper(conditions_dict=conditions_dict, output_dir=output_dir, **dm_kwargs)
+                    DeltaMapper(conditions_dict=conditions_dict, output_dir=output_dir, n_cores=n_cores, **dm_kwargs)
                 except Exception as e:
                     print(f'Skipping runnning {group} in Delta Mapper. Error: {e}')
                     traceback.print_exc()
@@ -2878,7 +2914,7 @@ def main(args):
                         conditions_dict[condition] = (sites,values[1],values[2])
                     output_dir = f'{working_dir}/{group} Comparisons/Combined Site'
                     os.makedirs(output_dir,exist_ok=True)
-                    CombinedSite(conditions_dict=conditions_dict, output_dir=output_dir, **cs_kwargs)
+                    CombinedSite(conditions_dict=conditions_dict, output_dir=output_dir, n_cores=n_cores, **cs_kwargs)
                 except Exception as e:
                     print(f'Skipping runnning {group} in Delta Mapper. Error: {e}')
                     traceback.print_exc()
