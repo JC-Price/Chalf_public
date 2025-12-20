@@ -1,17 +1,5 @@
 # CHalf v4.3
 
-<div align="center" style="width: 100%;">
-  <img src="Graphics/v4.3/CHalf Protein Logo.png" align="left" width="180" alt="CHalf Logo">
-
-  <img src="Graphics/v4.3/Brigham_Young_University_medallion.png" align="right" width="180" alt="BYU Logo">
-
-  <br><br>
-  <h3 style="font-size: 3.5em;">CHalf v4.3 - JC Price Lab</h3>
-</div>
-
-<br clear="all">
-<br>
-
 CHalf is a protein stability research tool. CHalf uses peptide intensity information within a denaturation curve to calculate the denaturation midpoint (“CHalf”) of protein/peptide fragments.  The tool was designed for use with mass spectrometry based information and can accept peptide quantification files from any proteomics identification and quantification software with some attention to [formatting](https://github.com/JC-Price/Chalf_public/blob/main/Demos%20and%20Documentation/formatting_guide.md).
 
 As proteins are subjected to a gradient of denaturing solutions (i.e. GdmCl) or temperatures, they unfold in varying amounts, exposing sites that cause precipitation (for thermal denaturation style experiments) or are labeled using tags such as iodine (for chemical denaturation style experiments).
