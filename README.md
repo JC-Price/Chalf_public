@@ -4,8 +4,8 @@
   <img src="Graphics/v4.3/CHalf Protein Logo.png" align="left" width="100" alt="CHalf Logo">
 
   <img src="Graphics/v4.3/Brigham_Young_University_medallion.png" align="right" width="100" alt="BYU Logo">
-
-  <h3 style="font-size: 4.5em;">CHalf v4.3 - JC Price Lab</h3>
+  <br><br>
+  <h3>CHalf v4.3 - JC Price Lab</h3>
 </div>
 
 <br clear="all">
