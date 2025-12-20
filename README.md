@@ -6,7 +6,7 @@
   <img src="Graphics/v4.3/Brigham_Young_University_medallion.png" align="right" width="180" alt="BYU Logo">
 
   <br><br>
-  <h1 style="border-bottom: none; margin: 0; font-size: 3.5em;">CHalf v4.3 - JC Price Lab</h1>
+  <h3 style="font-size: 3.5em;">CHalf v4.3 - JC Price Lab</h3>
 </div>
 
 <br clear="all">
