@@ -1,18 +1,17 @@
 # CHalf v4.3
-<table width="100%">
-  <tr>
-    <td width="10%" align="center">
-      <img src="Graphics/v4.3/CHalf Protein Logo.png" alt="CHalf Logo" width="120">
-    </td>
-    <td width="80%" align="center">
-      <h1 style="margin: 0; font-size: 3em;">CHalf v4.3</h1>
-      <h3 style="margin: 0;">JC Price Lab</h3>
-    </td>
-    <td width="10%" align="center">
-      <img src="Graphics/v4.3/Brigham_Young_University_medallion.png" alt="BYU Logo" width="120">
-    </td>
-  </tr>
-</table>
+
+<div align="center" style="width: 100%;">
+  <img src="Graphics/v4.3/CHalf Protein Logo.png" align="left" width="180" alt="CHalf Logo">
+
+  <img src="Graphics/v4.3/Brigham_Young_University_medallion.png" align="right" width="180" alt="BYU Logo">
+
+  <br><br>
+  <h1 style="border-bottom: none; margin: 0; font-size: 3.5em;">CHalf v4.3</h1>
+  <h3 style="margin: 0; font-size: 1.5em;">JC Price Lab</h3>
+</div>
+
+<br clear="all">
+<br>
 
 CHalf is a protein stability research tool. CHalf uses peptide intensity information within a denaturation curve to calculate the denaturation midpoint (“CHalf”) of protein/peptide fragments.  The tool was designed for use with mass spectrometry based information and can accept peptide quantification files from any proteomics identification and quantification software with some attention to [formatting](https://github.com/JC-Price/Chalf_public/blob/main/Demos%20and%20Documentation/formatting_guide.md).
 
