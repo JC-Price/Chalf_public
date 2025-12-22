@@ -1,0 +1,24 @@
+##CHALF OPTIONS##,,Default,,Possible Values,,Default Conc/Temp,,Label Efficiency Default Labels,,Fitting Efficiency,FE Value,,Combined Site,CS Value,,Residue Mapper,RM Value,,Combined Residue Mapper,CRM Value
+Graphics Option,,.svg,,.svg/.png/.jpg,,0,,Y(+125.90),,CHalf Low,0,,File Type,.svg,,File Type,.svg,,File Type,.svg
+Replicate Number,,1,,Integers >=1,,0.43,,Y(+251.79),,Chalf High,3.48,,Low,0,,Low,0,,Low,0
+Heat/Chemical Denature,,CD,,CD/HD,,0.87,,H(+125.90),,R Squared,0.6,,High,3.6,,High,3.6,,High,3.6
+Concentrations/Temperatures,,10,,Integers >=4,,1.3,,H(+251.79),,CI Low,0,,Dyamic,FALSE,,Dyamic,FALSE,,Dyamic,FALSE
+Individual Rep Analysis,,TRUE,,Boolean,,1.74,,W(+125.90),,CI High,0.35,,,,,,,,,
+Rep Graphs,,FALSE,,Boolean,,2.17,,M(+15.99),,,,,,,,,,,,
+Combined Analysis,,TRUE,,Boolean,,2.61,,M(+31.99),,,,,,,,,,,,
+Remove Outlier Analysis,,TRUE,,Boolean,,3.04,,C(+15.99),,,,,,,,,,,,
+Graph Combined,,FALSE,,Boolean,,3.48,,C(+31.99),,,,,,,,,,,,
+Giant Output,,FALSE,,Boolean,,3.59,,C(+47.98),,,,,,,,,,,,
+Minimum Points for Calculation,,4,,Integers >=4,,,,,,,,,,,,,,,,
+Outlier StdErr Cutoff (StdErr x #),,2,,Integers,,,,,,,,,,,,,,,,
+CI Mx% of Range,,0.3,,"Float in (0,1)",,,,,,,,,,,,,,,,
+R^2 Cutoff,,0.99,,"Float in (0,1)",,,,,,,,,,,,,,,,
+Chalf Range Cutoff,,0.5,,Float,,,,,,,,,,,,,,,,
+Label Efficiency,,TRUE,,Boolean,,,,,,,,,,,,,,,,
+Fitting Efficiency,,TRUE,,Boolean,,,,,,,,,,,,,,,,
+Combined Site Boxplots,,TRUE,,Boolean,,,,,,,,,,,,,,,,
+Residue Mapper,,TRUE,,Boolean,,,,,,,,,,,,,,,,
+Dynamic y-axis,,FALSE,,Boolean,,,,,,,,,,,,,,,,
+yMin,,0,,Float,,,,,,,,,,,,,,,,
+yMax,,3.6,,Float,,,,,,,,,,,,,,,,
+Directory,,,,Path,,,,,,,,,,,,,,,,
