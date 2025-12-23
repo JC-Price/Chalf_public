@@ -46,10 +46,9 @@ DOI: 10.1021/acs.jproteome.2c00619.
 
 
 """
-
-import matplotlib
+import matplotlib # type: ignore
 matplotlib.use('Agg') # Set the backend to 'Agg' for non-interactive plotting
-import matplotlib.backends.backend_svg
+#import matplotlib.backends.backend_svg # type: ignore
 
 import warnings, re, time, argparse, ast, inspect, os, random, subprocess, math, sys, traceback
 
@@ -65,10 +64,14 @@ from matplotlib.colors import is_color_like
 import matplotlib.ticker as ticker
 import altair as alt
 from datetime import timedelta
-from joblib import Parallel, delayed
+import functools
+print = functools.partial(print, flush=True)
 
-citation = '[NO_TIMESTAMP]Hyer, C. D.; Lin, H.-J. L.; Haderlie, C. T.; Berg, M.; Price, J. C.\n[NO_TIMESTAMP]CHalf: Folding Stability Made Simple.\n[NO_TIMESTAMP]Journal of Proteome Research 2023, 22 (2), 605-614.\n[NO_TIMESTAMP]DOI: 10.1021/acs.jproteome.2c00619.'
+import matplotlib.dates 
+import dateutil.rrule
+import multiprocessing
 
+import concurrent.futures
 
 def to_dict(x):
         try:
@@ -697,75 +700,7 @@ def make_label_site_function(row,search): #calculates label site
         row['Site Type'] = 'Error'
     return row
 
-"""DEFAULTS
-#conc dict represents the names of the abundance columns in your protein-peptides file and their associated concentrations
-conc_dict = conc_dict=dict(zip(['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'],[0.0, 0.43, 0.87, 1.3, 1.74, 2.17, 2.61, 3.04, 3.48, 3.59]))
-OUTLIER_CUTOFF = 2 #how many confidence intervals above the fitted curve before a point is considered an outlier
-MINIMUM_PTS = 4 #minimum number of points that must be used before fitting is attempted
-LIGHT_SEARCH = True #Only fit curves against peptides that have labelable residues, reduces computation time
-search=['Y','M','C','H'] #Residues to fit for if using light search
-WINDOW_FIT = False #if curves are to be broken down into component parts and fit in windows
-nwindow = 6 #number of points to be considered in each window
-SAVGOL_FIT = False #if raw abundances are to smoothed using a savgol filter
-SAVGOL_WINDOW = 5
-SAVGOL_ORDER = 2
-range_cutoff = (0,3.48) #C1/2 value must be within this range to be significant
-rsq_cutoff = 0.8 #r squared must be higher than this value to be significant
-rtr_cutoff = 0.35 #ratio to range of confidence interval must be lower than this value to be significant, if HANDLE_CI_UNCERTAINY is true, significance will not be based on this value, but CI will be factored in when considering displaying data
-highest_criteria = 'rsq' #which method to determine the best fit 'rsq' : maximizes r squared, 'ci' : minimizes confidence interval
-HANDLE_CI_UNCERTAINTY = True #treats confidence intervals beyond the desired value as nan values to indicate uncertainty without relying on the confidence interval metric to cut out data as the confidence interval metric is not always useful for indicating whether or not a curve is a good fit and may miss real stability transitions, but CI can be useful for indicating how certain a calculation is; using this paramater allows you to keep real curves that may not have confidence intervals while still indicating that they lack a solid confidence interval when displaying data
-CUSTOM_FASTA = False #handles annotating mutations that were inserted into your database during identification; your protein-peptides file should contain a column labeled 'Mutation' that will impact how curves are combined together during Chalf localization; mutated proteins' headers followed the format >PROTEIN_ID;refRNvar;start-end|ENTRY_NAME;refRNvar;start-end DESCRIPTION GN=GENE_NAME;refRNvar;start-end
-KEEP_INSIGNIFICANT = True #keeps insignficant curves in final output of combined sites
-concentrations = [0.0, 0.43, 0.87, 1.3, 1.74, 2.17, 2.61, 3.04, 3.48, 3.59] #tells combined sites what concentrations to fit for
-zero_criteria = 'remove' #replaces zeros in abundances with nan; 'keep' keeps them and factors them in normalization; 'impute' does not factor them in for normalization but fills them back in after normalization
-INITIAL_GUESS = True #attempts to do preprocessing to provide an informed initial guess for curve fitting to prevent fitting to local instead of global minima
-"""
-
-def CHalf(file,condition,outdir,n_cores=1,conc_dict=dict(zip(['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'],[0.0, 0.43, 0.87, 1.3, 1.74, 2.17, 2.61, 3.04, 3.48, 3.59])),TRIM_OUTLIERS=True,OUTLIER_CUTOFF=2,MINIMUM_PTS=4,LIGHT_SEARCH=True,search=list('YMCH'),WINDOW_FIT=False,nwindow=6,SAVGOL_FIT=False,SAVGOL_WINDOW=5,SAVGOL_ORDER=2,range_cutoff=(0,3.48),rsq_cutoff=0.8,rtr_cutoff=0.35,highest_criteria='rsq',HANDLE_CI_UNCERTAINTY=True,CUSTOM_FASTA=False,zero_criteria='remove',INITIAL_GUESS=True,GRAPH=False,file_type='jpg',graph_min=0,graph_max=3.48,graph_rsq=0.8,graph_ci_filter=False,graph_ci_value=0.35,KEEP_INSIGNIFICANT=None):
-    print(f'Reading {file}...')
-    try:
-        df = pd.read_csv(file)
-    except FileNotFoundError:
-        raise FileNotFoundError(f'{file} not found for {condition}. Skipping this condition...')
-    path = f'{outdir}/{condition}'
-    print(f'Creating output directory {path}')
-    os.makedirs(path,exist_ok=True)
-    if GRAPH:
-        graph_path = f'{path}/Graphs'
-        os.makedirs(graph_path,exist_ok=True)
-    else:
-        graph_path = ''
-    df.rename(columns={'Protein Accession':'Accession'},inplace=True)
-    df.insert(0,'Accession@Peptide',df['Accession']+'@'+df['Peptide'])
-    tmp_conc_dict = conc_dict
-    conc_dict = {}
-    for col in tmp_conc_dict: #keep only columns that apply
-        if col in df.columns: conc_dict.update({col:tmp_conc_dict[col]})
-    concentrations=list(conc_dict.values())
-    conc_cols = list(conc_dict)
-    
-    print(f'Identifying label sites for residues {search}...')
-    results = Parallel(n_jobs=n_cores)(delayed(make_label_site_function)(
-            row,
-            search
-        ) for index, row in df.iterrows())
-    #df = df.apply(make_label_site_function,search=search,axis=1) #Add label site information
-    clean_results = [r for r in results if r is not None]
-    df = pd.DataFrame(clean_results)
-    column_order = ['Accession@Peptide', 'Accession', 'Peptide', 'Site Type', 'Residue Number', 'Label Site', 'Label Type'] + conc_cols + ['Start', 'End']
-    if CUSTOM_FASTA: column_order = ['Accession@Peptide', 'Accession', 'Peptide', 'Mutation', 'Site Type', 'Residue Number', 'Label Site', 'Label Type'] + conc_cols + ['Start', 'End']
-    df = df[column_order] #reorder columns
-    
-    if LIGHT_SEARCH:
-        df = df.dropna(subset=['Site Type']) #limit CHalf calculations to peptides with fittable residues, saves computational time and limits potential artifacts
-    raw = df.copy()
-    df['#pts'] = df[conc_cols].notna().sum(axis = 1) #count all abundance values that are not nan in concentration columns
-    if SAVGOL_FIT:
-        print('Applying Savitsky-golay curve smoothing...')
-        df = df.apply(savgol_apply, conc_cols=conc_cols, window_length=SAVGOL_WINDOW, polyorder=SAVGOL_ORDER, axis=1)
-        raw[conc_cols] = raw[conc_cols].apply(lambda x: (x-np.nanmin(x))/(np.nanmax(x)-np.nanmin(x)), axis=1)
-    print('Normalizing intensities and calculating Spearman correlations...')
-    def norm_lambda(row,conc_cols,zero_criteria,concentrations):
+def norm_lambda(row,conc_cols,zero_criteria,concentrations):
         pd.set_option('future.no_silent_downcasting', True)
         row['End-Start'] = list(row[conc_cols].dropna())[-1] - list(row[conc_cols].dropna())[0] #last non nan point minus first non nan point 
         if zero_criteria == 'remove':
@@ -790,30 +725,8 @@ def CHalf(file,condition,outdir,n_cores=1,conc_dict=dict(zip(['0', '1', '2', '3'
         row['Spearman'] = spear
         row['P-value'] = p
         return row
-    df['Mean'] = df[conc_cols].mean(axis=1) #Mean of raw abundances
-    df['RSD'] = df[conc_cols].std(axis=1) / df['Mean'] #RSD of raw abundances
-    df['Range'] = df[conc_cols].max(axis=1) - df[conc_cols].min(axis=1) #Range of abundances max-min
-    df['Relative Range'] = df['Range'] / df['Mean'] #Range of abundances divided by mean abundance
-    df['% Change'] = df['Range'] / df[conc_cols].min(axis=1) #% Change from min to max abundance
-    df['fit_#non Zero'] = 0
-    results = Parallel(n_jobs=n_cores)(delayed(norm_lambda)(
-            row,
-            conc_cols,
-            zero_criteria,
-            concentrations
-        ) for index, row in df.iterrows())
-    #df = df.apply(make_label_site_function,search=search,axis=1) #Add label site information
-    clean_results = [r for r in results if r is not None]
-    df = pd.DataFrame(clean_results)
-    #df[conc_cols] = df[conc_cols].fillna(0)
-    
-    if highest_criteria == 'rsq': None
-    elif highest_criteria == 'ci': None
-    else: print('Fitting metric not recognized, defaulting to r squared maximization')
-    
-    data = pd.DataFrame()
-    print('Fitting curves...')
-    def CHalf_iteration(index, row):
+
+def CHalf_iteration(index, row, conc_cols, MINIMUM_PTS, INITIAL_GUESS, OUTLIER_CUTOFF, TRIM_OUTLIERS, highest_criteria, range_cutoff, rsq_cutoff, rtr_cutoff, HANDLE_CI_UNCERTAINTY, conc_dict, WINDOW_FIT, nwindow, concentrations, GRAPH,graph_min, graph_max, graph_rsq, graph_ci_filter,graph_ci_value, file_type, graph_path):
         pd.options.mode.chained_assignment = None
         warnings.filterwarnings("ignore")
         columns = ['fit_#non Zero','fit_slope','fit_Curve_B','fit_Curve_A','fit_CHalf', 'fit_Curve_b', 'fit_B_stderror', 'fit_A_stderror', 'fit_CHalf_stderror','fit_b_stderror', 'fit_CHalf_ConfidenceInterval', 'fit_ratioTOrange','fit_CHalf_confidenceInterval_lowBound', 'fit_CHalf_confidenceInterval_upBound','fit_b_confidenceInterval', 'fit_b_confidenceInterval_lowBound','fit_b_confidenceInterval_upBound', 'fit_r_squared', 'fit_CHalf_normalized','trim_#pts', 'trim_slope', 'trim_B', 'trim_A', 'trim_CHalf', 'trim_b','trim_B_stderror', 'trim_A_stderror', 'trim_CHalf_stderror','trim_b_stderror', 'trim_CHalf_ConfidenceInterval', 'trim_ratioTOrange','trim_CHalf_confidenceInterval_lowBound','trim_CHalf_confidenceInterval_upBound', 'trim_b_confidenceInterval','trim_b_confidenceInterval_lowBound','trim_b_confidenceInterval_upBound', 'trim_r_squared','trim_CHalf_normalized']
@@ -947,10 +860,126 @@ def CHalf(file,condition,outdir,n_cores=1,conc_dict=dict(zip(['0', '1', '2', '3'
                     traceback.print_exc()
             out = attempt.loc[0].copy().rename(index)
         return out
-    results = Parallel(n_jobs=n_cores)(delayed(CHalf_iteration)(
-            index, 
-            row
-        ) for index, row in df.iterrows())
+
+"""DEFAULTS
+#conc dict represents the names of the abundance columns in your protein-peptides file and their associated concentrations
+conc_dict = conc_dict=dict(zip(['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'],[0.0, 0.43, 0.87, 1.3, 1.74, 2.17, 2.61, 3.04, 3.48, 3.59]))
+OUTLIER_CUTOFF = 2 #how many confidence intervals above the fitted curve before a point is considered an outlier
+MINIMUM_PTS = 4 #minimum number of points that must be used before fitting is attempted
+LIGHT_SEARCH = True #Only fit curves against peptides that have labelable residues, reduces computation time
+search=['Y','M','C','H'] #Residues to fit for if using light search
+WINDOW_FIT = False #if curves are to be broken down into component parts and fit in windows
+nwindow = 6 #number of points to be considered in each window
+SAVGOL_FIT = False #if raw abundances are to smoothed using a savgol filter
+SAVGOL_WINDOW = 5
+SAVGOL_ORDER = 2
+range_cutoff = (0,3.48) #C1/2 value must be within this range to be significant
+rsq_cutoff = 0.8 #r squared must be higher than this value to be significant
+rtr_cutoff = 0.35 #ratio to range of confidence interval must be lower than this value to be significant, if HANDLE_CI_UNCERTAINY is true, significance will not be based on this value, but CI will be factored in when considering displaying data
+highest_criteria = 'rsq' #which method to determine the best fit 'rsq' : maximizes r squared, 'ci' : minimizes confidence interval
+HANDLE_CI_UNCERTAINTY = True #treats confidence intervals beyond the desired value as nan values to indicate uncertainty without relying on the confidence interval metric to cut out data as the confidence interval metric is not always useful for indicating whether or not a curve is a good fit and may miss real stability transitions, but CI can be useful for indicating how certain a calculation is; using this paramater allows you to keep real curves that may not have confidence intervals while still indicating that they lack a solid confidence interval when displaying data
+CUSTOM_FASTA = False #handles annotating mutations that were inserted into your database during identification; your protein-peptides file should contain a column labeled 'Mutation' that will impact how curves are combined together during Chalf localization; mutated proteins' headers followed the format >PROTEIN_ID;refRNvar;start-end|ENTRY_NAME;refRNvar;start-end DESCRIPTION GN=GENE_NAME;refRNvar;start-end
+KEEP_INSIGNIFICANT = True #keeps insignficant curves in final output of combined sites
+concentrations = [0.0, 0.43, 0.87, 1.3, 1.74, 2.17, 2.61, 3.04, 3.48, 3.59] #tells combined sites what concentrations to fit for
+zero_criteria = 'remove' #replaces zeros in abundances with nan; 'keep' keeps them and factors them in normalization; 'impute' does not factor them in for normalization but fills them back in after normalization
+INITIAL_GUESS = True #attempts to do preprocessing to provide an informed initial guess for curve fitting to prevent fitting to local instead of global minima
+"""
+
+def CHalf(file,condition,outdir,n_cores=1,conc_dict=dict(zip(['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'],[0.0, 0.43, 0.87, 1.3, 1.74, 2.17, 2.61, 3.04, 3.48, 3.59])),TRIM_OUTLIERS=True,OUTLIER_CUTOFF=2,MINIMUM_PTS=4,LIGHT_SEARCH=True,search=list('YMCH'),WINDOW_FIT=False,nwindow=6,SAVGOL_FIT=False,SAVGOL_WINDOW=5,SAVGOL_ORDER=2,range_cutoff=(0,3.48),rsq_cutoff=0.8,rtr_cutoff=0.35,highest_criteria='rsq',HANDLE_CI_UNCERTAINTY=True,CUSTOM_FASTA=False,zero_criteria='remove',INITIAL_GUESS=True,GRAPH=False,file_type='jpg',graph_min=0,graph_max=3.48,graph_rsq=0.8,graph_ci_filter=False,graph_ci_value=0.35,KEEP_INSIGNIFICANT=None):
+    print(f'Reading {file}...')
+    try:
+        df = pd.read_csv(file)
+    except FileNotFoundError:
+        raise FileNotFoundError(f'{file} not found for {condition}. Skipping this condition...')
+    path = f'{outdir}/{condition}'
+    print(f'Creating output directory {path}')
+    os.makedirs(path,exist_ok=True)
+    if GRAPH:
+        graph_path = f'{path}/Graphs'
+        os.makedirs(graph_path,exist_ok=True)
+    else:
+        graph_path = ''
+    df.rename(columns={'Protein Accession':'Accession'},inplace=True)
+    df.insert(0,'Accession@Peptide',df['Accession']+'@'+df['Peptide'])
+    tmp_conc_dict = conc_dict
+    conc_dict = {}
+    for col in tmp_conc_dict: #keep only columns that apply
+        if col in df.columns: conc_dict.update({col:tmp_conc_dict[col]})
+    concentrations=list(conc_dict.values())
+    conc_cols = list(conc_dict)
+    
+    print(f'Identifying label sites for residues {search}...')
+    with concurrent.futures.ProcessPoolExecutor(max_workers=n_cores) as parallel:
+        args_list = [(row, search) for index, row in df.iterrows()]
+        results = list(parallel.map(make_label_site_function, *zip(*args_list)))
+    #df = df.apply(make_label_site_function,search=search,axis=1) #Add label site information
+    clean_results = [r for r in results if r is not None]
+    df = pd.DataFrame(clean_results)
+    column_order = ['Accession@Peptide', 'Accession', 'Peptide', 'Site Type', 'Residue Number', 'Label Site', 'Label Type'] + conc_cols + ['Start', 'End']
+    if CUSTOM_FASTA: column_order = ['Accession@Peptide', 'Accession', 'Peptide', 'Mutation', 'Site Type', 'Residue Number', 'Label Site', 'Label Type'] + conc_cols + ['Start', 'End']
+    df = df[column_order] #reorder columns
+    
+    if LIGHT_SEARCH:
+        df = df.dropna(subset=['Site Type']) #limit CHalf calculations to peptides with fittable residues, saves computational time and limits potential artifacts
+    raw = df.copy()
+    df['#pts'] = df[conc_cols].notna().sum(axis = 1) #count all abundance values that are not nan in concentration columns
+    if SAVGOL_FIT:
+        print('Applying Savitsky-golay curve smoothing...')
+        df = df.apply(savgol_apply, conc_cols=conc_cols, window_length=SAVGOL_WINDOW, polyorder=SAVGOL_ORDER, axis=1)
+        raw[conc_cols] = raw[conc_cols].apply(lambda x: (x-np.nanmin(x))/(np.nanmax(x)-np.nanmin(x)), axis=1)
+    print('Normalizing intensities and calculating Spearman correlations...')
+    
+    df['Mean'] = df[conc_cols].mean(axis=1) #Mean of raw abundances
+    df['RSD'] = df[conc_cols].std(axis=1) / df['Mean'] #RSD of raw abundances
+    df['Range'] = df[conc_cols].max(axis=1) - df[conc_cols].min(axis=1) #Range of abundances max-min
+    df['Relative Range'] = df['Range'] / df['Mean'] #Range of abundances divided by mean abundance
+    df['% Change'] = df['Range'] / df[conc_cols].min(axis=1) #% Change from min to max abundance
+    df['fit_#non Zero'] = 0
+    with concurrent.futures.ProcessPoolExecutor(max_workers=n_cores) as parallel:
+        args_list = [(row,
+                conc_cols,
+                zero_criteria,
+                concentrations) for index, row in df.iterrows()]
+        results = list(parallel.map(norm_lambda, *zip(*args_list)))
+
+    #df = df.apply(make_label_site_function,search=search,axis=1) #Add label site information
+    clean_results = [r for r in results if r is not None]
+    df = pd.DataFrame(clean_results)
+    #df[conc_cols] = df[conc_cols].fillna(0)
+    
+    if highest_criteria == 'rsq': None
+    elif highest_criteria == 'ci': None
+    else: print('Fitting metric not recognized, defaulting to r squared maximization')
+    
+    data = pd.DataFrame()
+    print('Fitting curves...')
+    with concurrent.futures.ProcessPoolExecutor(max_workers=n_cores) as parallel:
+        args_list = [(index, 
+                row, 
+                conc_cols, 
+                MINIMUM_PTS, 
+                INITIAL_GUESS, 
+                OUTLIER_CUTOFF, 
+                TRIM_OUTLIERS, 
+                highest_criteria, 
+                range_cutoff, 
+                rsq_cutoff, 
+                rtr_cutoff, 
+                HANDLE_CI_UNCERTAINTY, 
+                conc_dict, 
+                WINDOW_FIT, 
+                nwindow, 
+                concentrations, 
+                GRAPH,
+                graph_min, 
+                graph_max, 
+                graph_rsq, 
+                graph_ci_filter,
+                graph_ci_value, 
+                file_type, 
+                graph_path) for index, row in df.iterrows()]
+        results = list(parallel.map(CHalf_iteration, *zip(*args_list)))
+                       
     clean_results = [r for r in results if r is not None]
     data = pd.DataFrame(clean_results)
     data.reset_index(inplace=True)
@@ -999,14 +1028,10 @@ def CHalf(file,condition,outdir,n_cores=1,conc_dict=dict(zip(['0', '1', '2', '3'
            'trim_CHalf_normalized']]
     conDF.to_csv(f'{path}/{condition}_Combined_OUTPUT.csv',index=False)
     sitesDF.to_csv(f'{path}/{condition} Sites.csv',index=False)
-    concentrations = conc_dict.values()
+    concentrations = list(conc_dict.values())
     return conDF, sitesDF, concentrations
 
-def CombinedSites(sitesDF, condition, outdir, n_cores=1, concentrations=[0.0, 0.43, 0.87, 1.3, 1.74, 2.17, 2.61, 3.04, 3.48, 3.59],TRIM_OUTLIERS=True,OUTLIER_CUTOFF=2,MINIMUM_PTS=4,range_cutoff=(0,3.48),rsq_cutoff=0.8,rtr_cutoff=0.35,highest_criteria='rsq',HANDLE_CI_UNCERTAINTY=True,KEEP_INSIGNIFICANT=True,CUSTOM_FASTA=False,INITIAL_GUESS=True,LIGHT_SEARCH=None,search=None,WINDOW_FIT=None,nwindow=None,SAVGOL_FIT=None,SAVGOL_WINDOW=None,SAVGOL_ORDER=None,GRAPH=None,file_type=None,graph_min=None,graph_max=None,graph_rsq=None,graph_ci_filter=None,graph_ci_value=None,zero_criteria=None):
-    csDF = pd.DataFrame()
-    print('Localizing stability values...')
-    groups = sitesDF.groupby(by='Label@Accession')
-    def CombinedSites_iteration(label, group):
+def CombinedSites_iteration(label, group, concentrations,MINIMUM_PTS,INITIAL_GUESS,OUTLIER_CUTOFF,TRIM_OUTLIERS,highest_criteria,range_cutoff,rsq_cutoff,rtr_cutoff,HANDLE_CI_UNCERTAINTY,CUSTOM_FASTA):
         warnings.filterwarnings("ignore")
         if len(group) > 1:
             x = []
@@ -1084,10 +1109,29 @@ def CombinedSites(sitesDF, condition, outdir, n_cores=1, concentrations=[0.0, 0.
             else: group = group[['Label@Accession','Accession','Peptide','Count','Site Type','Label Site','Label Type','Residue Number','CHalf','r_squared','ratioTOrange','CHalf_ConfidenceInterval','Slope','Curve_b','Baseline','Post-Transition','Significant']]
             attempt = group.copy()
         return attempt
-    results = Parallel(n_jobs=n_cores)(delayed(CombinedSites_iteration)(
-            label, 
-            group
-        ) for label, group in groups)
+
+def CombinedSites(sitesDF, condition, outdir, n_cores=1, concentrations=[0.0, 0.43, 0.87, 1.3, 1.74, 2.17, 2.61, 3.04, 3.48, 3.59],TRIM_OUTLIERS=True,OUTLIER_CUTOFF=2,MINIMUM_PTS=4,range_cutoff=(0,3.48),rsq_cutoff=0.8,rtr_cutoff=0.35,highest_criteria='rsq',HANDLE_CI_UNCERTAINTY=True,KEEP_INSIGNIFICANT=True,CUSTOM_FASTA=False,INITIAL_GUESS=True,LIGHT_SEARCH=None,search=None,WINDOW_FIT=None,nwindow=None,SAVGOL_FIT=None,SAVGOL_WINDOW=None,SAVGOL_ORDER=None,GRAPH=None,file_type=None,graph_min=None,graph_max=None,graph_rsq=None,graph_ci_filter=None,graph_ci_value=None,zero_criteria=None):
+    csDF = pd.DataFrame()
+    print('Localizing stability values...')
+    groups = sitesDF.groupby(by='Label@Accession')
+    
+    with concurrent.futures.ProcessPoolExecutor(max_workers=n_cores) as parallel:
+        args_list = [(
+                label, 
+                group,
+                concentrations,
+                MINIMUM_PTS,
+                INITIAL_GUESS,
+                OUTLIER_CUTOFF,
+                TRIM_OUTLIERS,
+                highest_criteria,
+                range_cutoff,
+                rsq_cutoff,
+                rtr_cutoff,
+                HANDLE_CI_UNCERTAINTY,
+                CUSTOM_FASTA
+            ) for label, group in groups]
+        results = list(parallel.map(CombinedSites_iteration, *zip(*args_list)))
     clean_results = [r for r in results if r is not None]
     csDF = pd.concat(clean_results)
     if HANDLE_CI_UNCERTAINTY: csDF['CHalf_ConfidenceInterval'] = csDF['CHalf_ConfidenceInterval'].mask(csDF['CHalf_ConfidenceInterval']>rtr_cutoff,np.nan)
@@ -1298,6 +1342,74 @@ def mutation_extracter(row):
     else: row['marker_shape'] = 'v'; row['Label@Accession'] = '_'.join(row['Label@Accession'].split('_')[:-1])
     return row
 
+def CRM_iteration(accession, group, TRENDLINE_STATS,subset,SHARED_ONLY,conditions,STATS_REFERENCE,window_size,color_dict,TRENDLINE,count_requirement,ANNOTATE,annotations,custom_annotation,ylim,output_dir,file_type):
+        warnings.filterwarnings("ignore")
+        perform_trendline_stats = TRENDLINE_STATS
+        with sns.axes_style('whitegrid'):
+            plt.close()
+            fig, ax = plt.subplots()
+            if subset != None and accession not in subset: return
+            count = 0
+            group.sort_values(['Condition','Residue Number'],inplace=True)
+            if SHARED_ONLY: group = group[group['Label@Accession'].duplicated(keep=False)] #only keeps label@accession values that are shared across conditions
+            for condition in conditions:
+                if len(group[group['Condition']==condition]) < 1: continue
+                else: count += 1
+            if count < 2: return
+            if STATS_REFERENCE: outDF = group[['Label@Accession','Residue Number','Label Type']].drop_duplicates().sort_values('Residue Number')
+            else: perform_trendline_stats = False
+            if perform_trendline_stats: trendDF = pd.DataFrame()
+            for condition in conditions:
+                cond_data = group[group['Condition']==condition]
+                x = cond_data['Residue Number']
+                if len(x) < 1: continue
+                else: count += 1
+                if STATS_REFERENCE: outDF = outDF.merge(cond_data[['Label@Accession','CHalf','CHalf_ConfidenceInterval']].rename(columns=dict(zip(['CHalf','CHalf_ConfidenceInterval'],[condition,f'{condition}_CI']))),how='left',on='Label@Accession')
+                y = cond_data['CHalf']
+                ci = cond_data['CHalf_ConfidenceInterval']
+                avg = cond_data['CHalf'].rolling(window=window_size).mean()
+                #markers = cond_data['marker_shape']
+                for marker, cond_data_subset in cond_data.groupby(by='marker_shape'):
+                    x_subset = cond_data_subset['Residue Number']
+                    y_subset = cond_data_subset['CHalf']
+                    if marker == 'o': sns.scatterplot(x=x_subset,y=y_subset,color=color_dict[condition],marker=marker,label=condition,ax=ax)
+                    else: sns.scatterplot(x=x_subset,y=y_subset,color=color_dict[condition],marker=marker,s=100,ax=ax)
+                #sns.scatterplot(x=x,y=y,color=color_dict[condition],style=markers,markers={'o':'o','s':'s'},label=condition)
+                ax.errorbar(x, y, yerr=ci, fmt="none", color=color_dict[condition], capsize=3)
+                if TRENDLINE: #Creates trendlines on CRM outputs if there are enough points as specified above
+                    if len(x.unique()) >= count_requirement:
+                        sns.lineplot(x=x,y=avg,color=color_dict[condition],ax=ax)
+                        if perform_trendline_stats: trendDF = pd.concat([trendDF,pd.DataFrame({f'{condition}_rn':x,f'{condition}_avg':avg})],axis=1)
+            ax.set_xlabel('Residue Number',fontsize=12,weight=600)
+            ax.set_ylabel('C½ [GdmCl]',fontsize=12,weight=600)
+            ax.xaxis.set_major_formatter(ticker.StrMethodFormatter('{x:.0f}'))
+            xticks = list(plt.xticks()[0])
+            xlabels = list(plt.xticks()[1])
+            ax.tick_params(axis='both', which='major', labelsize=12)
+            ax.set_xticks(xticks)
+            ax.set_xticklabels(xlabels)#,weight=600)
+            #ax.set_yticks(yticks)
+            #ax.set_yticklabels(ylabels)#,weight=600)
+            ax.set_title(accession,fontsize=14,weight=600)
+            ax.legend(fontsize=12,bbox_to_anchor =(0.5,-0.32), loc='lower center', ncol=count)#bbox_to_anchor=(1.05, 1.0), loc='upper left')
+            if type(annotations) != list: annotations = []
+            if ANNOTATE:
+                if accession in annotations:
+                    features = custom_annotation[accession]
+                    for feature in features:
+                        if type(feature) != dict: print(f'{feature} in custom_annotation not recognized. Skipping this feature.')
+                        if feature['type'] == 'title': ax.set_title(feature['value'],fontsize=14,weight=600)
+                        elif feature['type'] == 'vline': ax.axvline(feature['value'],linestyle='--',color='black')
+                        elif feature['type'] == 'hline': ax.axhline(feature['value'],linestyle='--',color='black')
+                        else: print(f'{feature} in custom_annotation not recognized. Skipping this feature.')
+            xmin, xmax = ax.get_xlim()
+            if xmin < 0: xmin = 0
+            ax.set_xlim((xmin,xmax))
+            ax.set_ylim(ylim)
+            plt.savefig(f'{output_dir}/{accession.replace("|","_")}.{file_type}', bbox_inches='tight')
+            if perform_trendline_stats: outDF = pd.concat([outDF,trendDF],axis=1)
+            if STATS_REFERENCE: outDF.to_csv(f'{output_dir}/{accession.replace("|","_")}_stats.csv',index=False)
+
 def CombinedResidueMapper(conditions_dict,output_dir,n_cores=1,file_type='jpg',ylim=(0,3.6),TRENDLINE=True,window_size=3,count_requirement=5,ALLSITES=True,STATS_REFERENCE=True,TRENDLINE_STATS=False,SHARED_ONLY=False,custom_annotation=None,subset=None,CUSTOM_FASTA=False,advanced_options=None):
     #INITIAL TESTS to prevent errors
     print("Checking paramaters and aggregating conditions' data for Combined Residue Mapper...")
@@ -1362,6 +1474,7 @@ def CombinedResidueMapper(conditions_dict,output_dir,n_cores=1,file_type='jpg',y
         compDF = compDF._append(df,ignore_index=True)
     if len(conditions) < 2: print('Not enough conditions to run Combined Residue Mapper. Skipping this step.'); return
     ANNOTATE = False
+    annotations = []
     compDF['marker_shape'] = 'o'
     if CUSTOM_FASTA:
         compDF['Mutation'] = compDF['Mutation'].fillna('None')
@@ -1370,56 +1483,104 @@ def CombinedResidueMapper(conditions_dict,output_dir,n_cores=1,file_type='jpg',y
         if type(custom_annotation) != dict: print('Custom annotation is in the wrong format. Skipping this step.'); ANNOTATE = False
         else: annotations = list(custom_annotation); ANNOTATE = True
     groups = compDF.groupby(by='Accession')
-    def CRM_iteration(accession, group):
+    
+    with concurrent.futures.ProcessPoolExecutor(max_workers=n_cores) as parallel:
+        args_list = [(
+                accession, 
+                group,
+                TRENDLINE_STATS,
+                subset,
+                SHARED_ONLY,
+                conditions,
+                STATS_REFERENCE,
+                window_size,
+                color_dict,
+                TRENDLINE,
+                count_requirement,
+                ANNOTATE,
+                annotations,
+                custom_annotation,
+                ylim,
+                output_dir,
+                file_type
+            ) for accession, group in groups]
+        results = list(parallel.map(CRM_iteration, *zip(*args_list)))
+        
+def DM_iteration(accession, group, subset,CUSTOM_FASTA,comp_dict,n_cutoff,CUT,significance_cutoff,color_dict,output_dir,TRENDLINE_STATS,file_type,TRENDLINE,window_size,count_requirement,ANNOTATE,annotations,custom_annotation,STATS_REFERENCE,ylim):
         warnings.filterwarnings("ignore")
-        perform_trendline_stats = TRENDLINE_STATS
+        if subset != None and accession not in subset: return
+        if CUSTOM_FASTA:
+            mutation_sites = list(set(group[group['Mutation']!='None']['Residue Number'].to_list()))
+        referenceDF = group[group['Type'] == 'reference'].copy()
+        referenceDF.rename(columns={'CHalf':'Reference'},inplace=True)
+        reference = comp_dict['reference'][0]
+        for condition in comp_dict['experimental']: #Make stat plots to compare distributions of conditions
+            to_merge = group[group['Condition'] == condition].copy()
+            to_merge.rename(columns={'CHalf':condition},inplace=True)
+            referenceDF = referenceDF.merge(to_merge[['Label@Accession',condition]],how='left',on='Label@Accession')
+            referenceDF[f'Δ{condition}'] = referenceDF[condition] - referenceDF['Reference']
+            to_compare = referenceDF.dropna(subset=condition)
+            kruskal, p_value = stats.kruskal(to_compare['Reference'],to_compare[condition])
+            referenceDF[f'p_{condition}'] = p_value
+            if len(to_compare) < n_cutoff: continue
+            if CUT: #for removing unsignificant changes
+                if p_value > significance_cutoff: continue 
+            plt.close()
+            with sns.axes_style('whitegrid'):
+                fig, (ax1, ax2) = plt.subplots(1,2)
+                
+                #KDE Plots
+                sns.kdeplot(to_compare['Reference'],color=color_dict[reference],ax=ax1,label=reference)
+                sns.kdeplot(to_compare[condition],color=color_dict[condition],ax=ax1,label=condition)
+                ax1.set_xlabel('C½ [GdmCl]',fontsize=12,weight=600)
+                ax1.set_ylabel('Density',fontsize=12,weight=600)
+                ax1.tick_params(axis='both', which='major', labelsize=12)
+                ax1.legend(fontsize=12)
+                ax1.set_title(f'Kruskal: {round(kruskal,4)} n={len(to_compare)}',fontsize=12)
+                
+                #Boxplots
+                data = pd.DataFrame({
+                    'CHalf' : to_compare['Reference'].to_list() + to_compare[condition].to_list(),
+                    'Group' : [reference]*len(to_compare) + [condition]*len(to_compare)                    
+                    })
+                sns.boxplot(data=data,x='Group',y='CHalf',ax=ax2,hue='Group',palette=[color_dict[reference],color_dict[condition]])
+                ax2.set_ylabel('C½ [GdmCl]',fontsize=12,weight=600)
+                ax2.set_xlabel('Condition',fontsize=12,weight=600)
+                ax2.tick_params(axis='both', which='major', labelsize=12)
+                ax2.set_title(f'P-Value: {round(p_value,4)}',fontsize=12)
+                
+                plt.suptitle(accession,fontsize=14,weight=600)
+                plt.tight_layout()
+                plt.savefig(f'{output_dir}/{accession.replace("|","_")} ({reference} vs {condition}) Distribution Comparison.{file_type}')
+        if len(referenceDF) == 0: return
         with sns.axes_style('whitegrid'):
             plt.close()
             fig, ax = plt.subplots()
-            if subset != None and accession not in subset: return
+            referenceDF.sort_values(['Residue Number'],inplace=True)
+            if TRENDLINE_STATS: trendDF = pd.DataFrame()
             count = 0
-            group.sort_values(['Condition','Residue Number'],inplace=True)
-            if SHARED_ONLY: group = group[group['Label@Accession'].duplicated(keep=False)] #only keeps label@accession values that are shared across conditions
-            for condition in conditions:
-                if len(group[group['Condition']==condition]) < 1: continue
-                else: count += 1
-            if count < 2: return
-            if STATS_REFERENCE: outDF = group[['Label@Accession','Residue Number','Label Type']].drop_duplicates().sort_values('Residue Number')
-            else: perform_trendline_stats = False
-            if perform_trendline_stats: trendDF = pd.DataFrame()
-            for condition in conditions:
-                cond_data = group[group['Condition']==condition]
-                x = cond_data['Residue Number']
-                if len(x) < 1: continue
-                else: count += 1
-                if STATS_REFERENCE: outDF = outDF.merge(cond_data[['Label@Accession','CHalf','CHalf_ConfidenceInterval']].rename(columns=dict(zip(['CHalf','CHalf_ConfidenceInterval'],[condition,f'{condition}_CI']))),how='left',on='Label@Accession')
-                y = cond_data['CHalf']
-                ci = cond_data['CHalf_ConfidenceInterval']
-                avg = cond_data['CHalf'].rolling(window=window_size).mean()
-                #markers = cond_data['marker_shape']
-                for marker, cond_data_subset in cond_data.groupby(by='marker_shape'):
-                    x_subset = cond_data_subset['Residue Number']
-                    y_subset = cond_data_subset['CHalf']
-                    if marker == 'o': sns.scatterplot(x=x_subset,y=y_subset,color=color_dict[condition],marker=marker,label=condition,ax=ax)
-                    else: sns.scatterplot(x=x_subset,y=y_subset,color=color_dict[condition],marker=marker,s=100,ax=ax)
-                #sns.scatterplot(x=x,y=y,color=color_dict[condition],style=markers,markers={'o':'o','s':'s'},label=condition)
-                ax.errorbar(x, y, yerr=ci, fmt="none", color=color_dict[condition], capsize=3)
-                if TRENDLINE: #Creates trendlines on CRM outputs if there are enough points as specified above
+            for condition in comp_dict['experimental']:
+                if CUT: #skip insignificant differences
+                    p_value = referenceDF[f'p_{condition}'].to_list()[0]
+                    if p_value > significance_cutoff or np.isnan(p_value): continue
+                if len(referenceDF[f'Δ{condition}'].dropna()) > 0: count += 1
+                sns.scatterplot(data=referenceDF, x='Residue Number', y=f'Δ{condition}', ax=ax, color=color_dict[condition], label=condition)
+                if TRENDLINE:
+                    cond_data = referenceDF.dropna(subset=f'Δ{condition}').copy()
+                    x = cond_data['Residue Number']
+                    avg = cond_data[f'Δ{condition}'].rolling(window=window_size).mean()
                     if len(x.unique()) >= count_requirement:
                         sns.lineplot(x=x,y=avg,color=color_dict[condition],ax=ax)
-                        if perform_trendline_stats: trendDF = pd.concat([trendDF,pd.DataFrame({f'{condition}_rn':x,f'{condition}_avg':avg})],axis=1)
-            ax.set_xlabel('Residue Number',fontsize=12,weight=600)
-            ax.set_ylabel('C½ [GdmCl]',fontsize=12,weight=600)
-            ax.xaxis.set_major_formatter(ticker.StrMethodFormatter('{x:.0f}'))
-            xticks = list(plt.xticks()[0])
-            xlabels = list(plt.xticks()[1])
-            ax.tick_params(axis='both', which='major', labelsize=12)
-            ax.set_xticks(xticks)
-            ax.set_xticklabels(xlabels)#,weight=600)
-            #ax.set_yticks(yticks)
-            #ax.set_yticklabels(ylabels)#,weight=600)
+                        if TRENDLINE_STATS: trendDF = pd.concat([trendDF,pd.DataFrame({f'{condition}_rn':x,f'{condition}_avg':avg})],axis=1)
+            if count == 0: return
             ax.set_title(accession,fontsize=14,weight=600)
             ax.legend(fontsize=12,bbox_to_anchor =(0.5,-0.32), loc='lower center', ncol=count)#bbox_to_anchor=(1.05, 1.0), loc='upper left')
+            ax.set_title(accession,fontsize=14,weight=600)
+            
+            if CUSTOM_FASTA:
+                for site in mutation_sites:
+                    ax.plot(site, 0, marker='d', markersize=5, color='black', markeredgecolor='black')
+            if type(annotations) != list: annotations = []
             if ANNOTATE:
                 if accession in annotations:
                     features = custom_annotation[accession]
@@ -1429,19 +1590,19 @@ def CombinedResidueMapper(conditions_dict,output_dir,n_cores=1,file_type='jpg',y
                         elif feature['type'] == 'vline': ax.axvline(feature['value'],linestyle='--',color='black')
                         elif feature['type'] == 'hline': ax.axhline(feature['value'],linestyle='--',color='black')
                         else: print(f'{feature} in custom_annotation not recognized. Skipping this feature.')
-            xmin, xmax = ax.get_xlim()
-            if xmin < 0: xmin = 0
-            ax.set_xlim((xmin,xmax))
+            
+            if TRENDLINE_STATS: referenceDF = pd.concat([referenceDF,trendDF],axis=1)
+            if STATS_REFERENCE: referenceDF.to_csv(f'{output_dir}/{accession.replace("|","_")}_condition_comparison_stats.csv',index=False)
+            
+            ax.axhline(0,color='black')
+            ax.set_xlabel('Residue Number',fontsize=12,weight=600)
+            ax.set_ylabel('ΔC½ [GdmCl]',fontsize=12,weight=600)
+            ax.xaxis.set_major_formatter(ticker.StrMethodFormatter('{x:.0f}'))
             ax.set_ylim(ylim)
-            plt.savefig(f'{output_dir}/{accession.replace("|","_")}.{file_type}', bbox_inches='tight')
-            if perform_trendline_stats: outDF = pd.concat([outDF,trendDF],axis=1)
-            if STATS_REFERENCE: outDF.to_csv(f'{output_dir}/{accession.replace("|","_")}_stats.csv',index=False)
-    results = Parallel(n_jobs=n_cores)(delayed(CRM_iteration)(
-            accession, 
-            group
-        ) for accession, group in groups)
-        
-        
+            ax.tick_params(axis='both', which='major', labelsize=12)
+
+            plt.savefig(f'{output_dir}/{accession.replace("|","_")}_condition_comparison.{file_type}', bbox_inches='tight')  
+
 def DeltaMapper(conditions_dict,output_dir,n_cores=1,file_type='jpg',significance_cutoff_bool=False,significance_cutoff=None,n_cutoff=3,ylim=(-3.6,3.6),TRENDLINE=True,window_size=3,count_requirement=5,ALLSITES=True,STATS_REFERENCE=True,TRENDLINE_STATS=False,custom_annotation=None,subset=None,CUSTOM_FASTA=False,advanced_options=None):
     #INITIAL TESTS to prevent errors
     print("Checking paramaters and aggregating conditions' data for Delta Mapper...")
@@ -1528,6 +1689,7 @@ def DeltaMapper(conditions_dict,output_dir,n_cores=1,file_type='jpg',significanc
         compDF = compDF._append(df,ignore_index=True)
     if len(conditions) < 2: print('Not enough conditions to run Delta Mapper. Skipping this step.'); return
     ANNOTATE = False
+    annotations = []
     compDF['marker_shape'] = 'o'
     if CUSTOM_FASTA:
         compDF['Mutation'] = compDF['Mutation'].fillna('None')
@@ -1537,105 +1699,31 @@ def DeltaMapper(conditions_dict,output_dir,n_cores=1,file_type='jpg',significanc
         else: annotations = list(custom_annotation); ANNOTATE = True
     groups = compDF.groupby(by='Accession')
     if len(comp_dict['reference']) < 1 or len(comp_dict['experimental']) < 1: print('Not enough conditions to run Delta Mapper. Skipping this step.'); return
-    def DM_iteration(accession, group):
-        warnings.filterwarnings("ignore")
-        if subset != None and accession not in subset: return
-        if CUSTOM_FASTA:
-            mutation_sites = list(set(group[group['Mutation']!='None']['Residue Number'].to_list()))
-        referenceDF = group[group['Type'] == 'reference'].copy()
-        referenceDF.rename(columns={'CHalf':'Reference'},inplace=True)
-        reference = comp_dict['reference'][0]
-        for condition in comp_dict['experimental']: #Make stat plots to compare distributions of conditions
-            to_merge = group[group['Condition'] == condition].copy()
-            to_merge.rename(columns={'CHalf':condition},inplace=True)
-            referenceDF = referenceDF.merge(to_merge[['Label@Accession',condition]],how='left',on='Label@Accession')
-            referenceDF[f'Δ{condition}'] = referenceDF[condition] - referenceDF['Reference']
-            to_compare = referenceDF.dropna(subset=condition)
-            kruskal, p_value = stats.kruskal(to_compare['Reference'],to_compare[condition])
-            referenceDF[f'p_{condition}'] = p_value
-            if len(to_compare) < n_cutoff: continue
-            if CUT: #for removing unsignificant changes
-                if p_value > significance_cutoff: continue 
-            plt.close()
-            with sns.axes_style('whitegrid'):
-                fig, (ax1, ax2) = plt.subplots(1,2)
-                
-                #KDE Plots
-                sns.kdeplot(to_compare['Reference'],color=color_dict[reference],ax=ax1,label=reference)
-                sns.kdeplot(to_compare[condition],color=color_dict[condition],ax=ax1,label=condition)
-                ax1.set_xlabel('C½ [GdmCl]',fontsize=12,weight=600)
-                ax1.set_ylabel('Density',fontsize=12,weight=600)
-                ax1.tick_params(axis='both', which='major', labelsize=12)
-                ax1.legend(fontsize=12)
-                ax1.set_title(f'Kruskal: {round(kruskal,4)} n={len(to_compare)}',fontsize=12)
-                
-                #Boxplots
-                data = pd.DataFrame({
-                    'CHalf' : to_compare['Reference'].to_list() + to_compare[condition].to_list(),
-                    'Group' : [reference]*len(to_compare) + [condition]*len(to_compare)                    
-                    })
-                sns.boxplot(data=data,x='Group',y='CHalf',ax=ax2,hue='Group',palette=[color_dict[reference],color_dict[condition]])
-                ax2.set_ylabel('C½ [GdmCl]',fontsize=12,weight=600)
-                ax2.set_xlabel('Condition',fontsize=12,weight=600)
-                ax2.tick_params(axis='both', which='major', labelsize=12)
-                ax2.set_title(f'P-Value: {round(p_value,4)}',fontsize=12)
-                
-                plt.suptitle(accession,fontsize=14,weight=600)
-                plt.tight_layout()
-                plt.savefig(f'{output_dir}/{accession.replace("|","_")} ({reference} vs {condition}) Distribution Comparison.{file_type}')
-        if len(referenceDF) == 0: return
-        with sns.axes_style('whitegrid'):
-            plt.close()
-            fig, ax = plt.subplots()
-            referenceDF.sort_values(['Residue Number'],inplace=True)
-            if TRENDLINE_STATS: trendDF = pd.DataFrame()
-            count = 0
-            for condition in comp_dict['experimental']:
-                if CUT: #skip insignificant differences
-                    p_value = referenceDF[f'p_{condition}'].to_list()[0]
-                    if p_value > significance_cutoff or np.isnan(p_value): continue
-                if len(referenceDF[f'Δ{condition}'].dropna()) > 0: count += 1
-                sns.scatterplot(data=referenceDF, x='Residue Number', y=f'Δ{condition}', ax=ax, color=color_dict[condition], label=condition)
-                if TRENDLINE:
-                    cond_data = referenceDF.dropna(subset=f'Δ{condition}').copy()
-                    x = cond_data['Residue Number']
-                    avg = cond_data[f'Δ{condition}'].rolling(window=window_size).mean()
-                    if len(x.unique()) >= count_requirement:
-                        sns.lineplot(x=x,y=avg,color=color_dict[condition],ax=ax)
-                        if TRENDLINE_STATS: trendDF = pd.concat([trendDF,pd.DataFrame({f'{condition}_rn':x,f'{condition}_avg':avg})],axis=1)
-            if count == 0: return
-            ax.set_title(accession,fontsize=14,weight=600)
-            ax.legend(fontsize=12,bbox_to_anchor =(0.5,-0.32), loc='lower center', ncol=count)#bbox_to_anchor=(1.05, 1.0), loc='upper left')
-            ax.set_title(accession,fontsize=14,weight=600)
-            
-            if CUSTOM_FASTA:
-                for site in mutation_sites:
-                    ax.plot(site, 0, marker='d', markersize=5, color='black', markeredgecolor='black')
-            if ANNOTATE:
-                if accession in annotations:
-                    features = custom_annotation[accession]
-                    for feature in features:
-                        if type(feature) != dict: print(f'{feature} in custom_annotation not recognized. Skipping this feature.')
-                        if feature['type'] == 'title': ax.set_title(feature['value'],fontsize=14,weight=600)
-                        elif feature['type'] == 'vline': ax.axvline(feature['value'],linestyle='--',color='black')
-                        elif feature['type'] == 'hline': ax.axhline(feature['value'],linestyle='--',color='black')
-                        else: print(f'{feature} in custom_annotation not recognized. Skipping this feature.')
-            
-            if TRENDLINE_STATS: referenceDF = pd.concat([referenceDF,trendDF],axis=1)
-            if STATS_REFERENCE: referenceDF.to_csv(f'{output_dir}/{accession.replace("|","_")}_condition_comparison_stats.csv',index=False)
-            
-            ax.axhline(0,color='black')
-            ax.set_xlabel('Residue Number',fontsize=12,weight=600)
-            ax.set_ylabel('ΔC½ [GdmCl]',fontsize=12,weight=600)
-            ax.xaxis.set_major_formatter(ticker.StrMethodFormatter('{x:.0f}'))
-            ax.set_ylim(ylim)
-            ax.tick_params(axis='both', which='major', labelsize=12)
-
-            plt.savefig(f'{output_dir}/{accession.replace("|","_")}_condition_comparison.{file_type}', bbox_inches='tight')
-    results = Parallel(n_jobs=n_cores)(delayed(DM_iteration)(
-            accession, 
-            group
-        ) for accession, group in groups)
+    
+    with concurrent.futures.ProcessPoolExecutor(max_workers=n_cores) as parallel:
+        args_list = [(
+                accession, 
+                group,
+                subset,
+                CUSTOM_FASTA,
+                comp_dict,
+                n_cutoff,
+                CUT,
+                significance_cutoff,
+                color_dict,
+                output_dir,
+                TRENDLINE_STATS,
+                file_type,
+                TRENDLINE,
+                window_size,
+                count_requirement,
+                ANNOTATE,
+                annotations,
+                custom_annotation,
+                STATS_REFERENCE,
+                ylim
+            ) for accession, group in groups]
+        results = list(parallel.map(DM_iteration, *zip(*args_list)))
         
 
 def create_interactive_kde_plot(csv_file, color, condition_name, x_min=0, x_max=3.6, stepsize=500):
@@ -1841,67 +1929,7 @@ def generate_qc_report(conditions_dict, output_dir, open_on_completion=False):
             print(f"Error opening file: {e}")
             traceback.print_exc()
 
-def ResidueMapper(file,output_dir,n_cores=1,file_type='jpg',ylim=(0,3.6),TRENDLINE=True,window_size=3,count_requirement=5,ALLSITES=True,STATS_REFERENCE=True,TRENDLINE_STATS=False,custom_annotation=None,subset=None,CUSTOM_FASTA=False,advanced_options=None):
-    #INITIAL TESTS to prevent errors
-    print("Performing Residue Mapper...")
-    compDF = pd.DataFrame()
-    if advanced_options != None:
-        extracted_data = read_ann_file(advanced_options)
-        if 'subset' in extracted_data: subset = extracted_data['subset']
-        if 'custom_annotation' in extracted_data: custom_annotation = extracted_data['custom_annotation']
-    if not ((file_type == 'jpg') or (file_type == 'png') or (file_type == 'svg')): #test for correct file type
-        print('Unrecognized file type. Selecting .jpg')
-        file_type = 'jpg'
-    if not os.path.isdir(output_dir): #test if output directory exists
-        print(f'Output directory does not exist. Creating {output_dir}')
-        os.mkdir(output_dir)
-    if not type(window_size) == int: #test if window size is an integer and within correct bounds
-        print('Window size is a non-integer value. Defaulting to a window size of 3.')
-        window_size = 3
-    else:
-        if window_size < 2: window_size = 2; print('Window size is below the minimum value of 2. Setting window size to 2.')
-    if not type(count_requirement) == int:
-        print('Window cutoff is a non-integer value. Defaulting to a window cutoff of 5.')
-        count_requirement = 5
-    else:
-        if count_requirement < window_size:
-            count_requirement = window_size
-            print(f'Window cutoff must be greater than or equal to window size. Setting window cutoff to {window_size}.') 
-    try: #Test if file exists and has the correct formatting
-        df = pd.read_csv(file)
-        if CUSTOM_FASTA: df = df[['Label@Accession', 'Accession', 'Peptide', 'Mutation','Count', 'Site Type', 'Label Site', 'Label Type', 'Residue Number', 'CHalf', 'r_squared', 'ratioTOrange', 'CHalf_ConfidenceInterval', 'Slope', 'Significant']]
-        else: df = df[['Label@Accession', 'Accession', 'Peptide', 'Count', 'Site Type', 'Label Site', 'Label Type', 'Residue Number', 'CHalf', 'r_squared', 'ratioTOrange', 'CHalf_ConfidenceInterval', 'Slope', 'Significant']]
-    except KeyError:
-        print(f'Input file {file} does not have the correct columns. Please check that it is the correct format for a "Combined Sites" file. Skipping Residue Mapper.')
-        return
-    except FileNotFoundError:
-        print(f'Input file {file} does not exist. Please check that it has the correct path. Skipping Residue Mapper.')
-        return
-    df = df[df['Significant']] #only choosing significant sites
-    if ALLSITES: df = df[df['Site Type'].str.contains('Single')] #removing non single sites
-    else: df = df[df['Site Type']=='Single Labeled'] #keeping only single labeled sites
-    compDF = compDF._append(df,ignore_index=True)
-    ANNOTATE = False
-    
-    # If CUSTOM_FASTA, marker_shape is determined by mutation_extracter
-    # Otherwise, we'll set it to 'o' as a default and let seaborn handle markers by hue.
-    if CUSTOM_FASTA:
-        compDF['Mutation'] = compDF['Mutation'].fillna('None')
-        compDF = compDF.apply(mutation_extracter,axis=1)
-    else:
-        compDF['marker_shape'] = 'o' # Default marker shape when not dealing with mutations
-
-    if custom_annotation != None:
-        if type(custom_annotation) != dict: print('Custom annotation is in the wrong format. Skipping this step.'); ANNOTATE = False
-        else: annotations = list(custom_annotation); ANNOTATE = True
-            
-    # Define a color palette for 'Label Type'
-    label_types = compDF['Label Type'].unique()
-    colors = sns.color_palette("tab10", len(label_types)) # Using a qualitative palette
-    color_map = dict(zip(label_types, colors))
-
-    groups = compDF.groupby(by='Accession')
-    def RM_iteration(accession, group):
+def RM_iteration(accession, group,subset,STATS_REFERENCE,TRENDLINE_STATS,CUSTOM_FASTA,TRENDLINE,count_requirement,window_size,color_map,ANNOTATE,annotations,custom_annotation,ylim,output_dir,file_type):
         warnings.filterwarnings("ignore")
         with sns.axes_style('whitegrid'):
             plt.close()
@@ -1989,6 +2017,7 @@ def ResidueMapper(file,output_dir,n_cores=1,file_type='jpg',ylim=(0,3.6),TRENDLI
             
             ax.legend(sorted_handles, sorted_labels, fontsize=12, bbox_to_anchor =(0.5,dynamic_y_pos), loc='lower center', ncol=legend_ncol)
             
+            if type(annotations) != list: annotations = []
             if ANNOTATE:
                 if accession in annotations:
                     features = custom_annotation[accession]
@@ -2005,10 +2034,89 @@ def ResidueMapper(file,output_dir,n_cores=1,file_type='jpg',ylim=(0,3.6),TRENDLI
             plt.savefig(f'{output_dir}/{accession.replace("|","_")}.{file_type}', bbox_inches='tight')
             if TRENDLINE_STATS: outDF = pd.concat([outDF,trendDF],axis=1)
             if STATS_REFERENCE: outDF.to_csv(f'{output_dir}/{accession.replace("|","_")}_stats.csv',index=False)
-    results = Parallel(n_jobs=n_cores)(delayed(RM_iteration)(
-            accession, 
-            group
-        ) for accession, group in groups)
+
+def ResidueMapper(file,output_dir,n_cores=1,file_type='jpg',ylim=(0,3.6),TRENDLINE=True,window_size=3,count_requirement=5,ALLSITES=True,STATS_REFERENCE=True,TRENDLINE_STATS=False,custom_annotation=None,subset=None,CUSTOM_FASTA=False,advanced_options=None):
+    #INITIAL TESTS to prevent errors
+    print("Performing Residue Mapper...")
+    compDF = pd.DataFrame()
+    if advanced_options != None:
+        extracted_data = read_ann_file(advanced_options)
+        if 'subset' in extracted_data: subset = extracted_data['subset']
+        if 'custom_annotation' in extracted_data: custom_annotation = extracted_data['custom_annotation']
+    if not ((file_type == 'jpg') or (file_type == 'png') or (file_type == 'svg')): #test for correct file type
+        print('Unrecognized file type. Selecting .jpg')
+        file_type = 'jpg'
+    if not os.path.isdir(output_dir): #test if output directory exists
+        print(f'Output directory does not exist. Creating {output_dir}')
+        os.mkdir(output_dir)
+    if not type(window_size) == int: #test if window size is an integer and within correct bounds
+        print('Window size is a non-integer value. Defaulting to a window size of 3.')
+        window_size = 3
+    else:
+        if window_size < 2: window_size = 2; print('Window size is below the minimum value of 2. Setting window size to 2.')
+    if not type(count_requirement) == int:
+        print('Window cutoff is a non-integer value. Defaulting to a window cutoff of 5.')
+        count_requirement = 5
+    else:
+        if count_requirement < window_size:
+            count_requirement = window_size
+            print(f'Window cutoff must be greater than or equal to window size. Setting window cutoff to {window_size}.') 
+    try: #Test if file exists and has the correct formatting
+        df = pd.read_csv(file)
+        if CUSTOM_FASTA: df = df[['Label@Accession', 'Accession', 'Peptide', 'Mutation','Count', 'Site Type', 'Label Site', 'Label Type', 'Residue Number', 'CHalf', 'r_squared', 'ratioTOrange', 'CHalf_ConfidenceInterval', 'Slope', 'Significant']]
+        else: df = df[['Label@Accession', 'Accession', 'Peptide', 'Count', 'Site Type', 'Label Site', 'Label Type', 'Residue Number', 'CHalf', 'r_squared', 'ratioTOrange', 'CHalf_ConfidenceInterval', 'Slope', 'Significant']]
+    except KeyError:
+        print(f'Input file {file} does not have the correct columns. Please check that it is the correct format for a "Combined Sites" file. Skipping Residue Mapper.')
+        return
+    except FileNotFoundError:
+        print(f'Input file {file} does not exist. Please check that it has the correct path. Skipping Residue Mapper.')
+        return
+    df = df[df['Significant']] #only choosing significant sites
+    if ALLSITES: df = df[df['Site Type'].str.contains('Single')] #removing non single sites
+    else: df = df[df['Site Type']=='Single Labeled'] #keeping only single labeled sites
+    compDF = compDF._append(df,ignore_index=True)
+    ANNOTATE = False
+    annotations = []
+    
+    # If CUSTOM_FASTA, marker_shape is determined by mutation_extracter
+    # Otherwise, we'll set it to 'o' as a default and let seaborn handle markers by hue.
+    if CUSTOM_FASTA:
+        compDF['Mutation'] = compDF['Mutation'].fillna('None')
+        compDF = compDF.apply(mutation_extracter,axis=1)
+    else:
+        compDF['marker_shape'] = 'o' # Default marker shape when not dealing with mutations
+
+    if custom_annotation != None:
+        if type(custom_annotation) != dict: print('Custom annotation is in the wrong format. Skipping this step.'); ANNOTATE = False
+        else: annotations = list(custom_annotation); ANNOTATE = True
+            
+    # Define a color palette for 'Label Type'
+    label_types = compDF['Label Type'].unique()
+    colors = sns.color_palette("tab10", len(label_types)) # Using a qualitative palette
+    color_map = dict(zip(label_types, colors))
+
+    groups = compDF.groupby(by='Accession')
+    
+    with concurrent.futures.ProcessPoolExecutor(max_workers=n_cores) as parallel:
+        args_list = [(
+                accession, 
+                group,
+                subset,
+                STATS_REFERENCE,
+                TRENDLINE_STATS,
+                CUSTOM_FASTA,
+                TRENDLINE,
+                count_requirement,
+                window_size,
+                color_map,
+                ANNOTATE,
+                annotations,
+                custom_annotation,
+                ylim,
+                output_dir,
+                file_type
+            ) for accession, group in groups]
+        results = list(parallel.map(RM_iteration, *zip(*args_list)))
 
 def get_quality_control_default_args():
     """
@@ -2552,6 +2660,67 @@ def prepare_combined_site_arguments(params: 'ParameterDict'):
 
     return cs_args
 
+def CS_iteration(label_accession, group_data, conditions_order, output_dir, ylim, file_type):
+        warnings.filterwarnings("ignore")
+        # Prepare summary row for CSV
+        row_summary = {'Label@Accession': label_accession}
+        # Extract Label Type, Label Site, Accession, Residue Number
+        parts = label_accession.split('_')
+        row_summary['Label Type'] = parts[0] if len(parts) > 0 else np.nan
+        row_summary['Label Site'] = parts[1] if len(parts) > 1 else np.nan
+        row_summary['Accession'] = '_'.join(parts[2:]) if len(parts) > 2 else np.nan
+        row_summary['Residue Number'] = group_data['Residue Number'].iloc[0] if not group_data.empty and 'Residue Number' in group_data.columns else np.nan
+        
+        # Check if multiple conditions have data points
+        generate_plot = group_data['Condition'].nunique() > 1
+
+        # Generate plot for each Label@Accession group only if condition is met
+        plt.close('all') # Close all existing figures to prevent memory issues
+        
+        if generate_plot:
+            fig, ax = plt.subplots(figsize=(8, 6))
+    
+            with sns.axes_style('whitegrid'):
+                # Create the boxplot - using hue='Condition' for separate boxes and automatic coloring
+                sns.boxplot(data=group_data, x='Condition', y='CHalf', ax=ax,
+                            order=conditions_order,
+                            showfliers=False, # Do not show outliers in boxplot itself
+                            linewidth=1.0)
+    
+                # Add individual data points (swarmplot)
+                sns.swarmplot(data=group_data, x='Condition', y='CHalf', ax=ax,
+                              color='black', size=4, dodge=True, zorder=5) # dodge=True for swarmplot on top of boxplot
+    
+                ax.set_xlabel('Condition', fontsize=12, weight='bold')
+                ax.set_ylabel('C½ [GdmCl]', fontsize=12, weight='bold')
+                ax.tick_params(axis='both', which='major', labelsize=10)
+                ax.set_title(label_accession, fontsize=14, weight='bold')
+                ax.set_ylim(ylim)
+    
+                plt.tight_layout()
+                # Sanitize filename to remove invalid characters
+                safe_label_accession = re.sub(r'[\\/:*?"<>|]', '_', label_accession)
+                output_filepath = os.path.join(output_dir, f'{safe_label_accession} Boxplot.{file_type}')
+                plt.savefig(output_filepath, bbox_inches='tight', dpi=300) # Save with higher DPI
+                plt.close(fig) # Explicitly close the figure to free memory
+    
+                # Populate summary row with statistics for each condition
+                for condition in conditions_order:
+                    cond_subset_df = group_data[group_data['Condition'] == condition]['CHalf'].dropna()
+                    if not cond_subset_df.empty:
+                        row_summary[f'{condition}_CHalf_mean'] = cond_subset_df.mean()
+                        row_summary[f'{condition}_CHalf_median'] = cond_subset_df.median()
+                        row_summary[f'{condition}_CHalf_std'] = cond_subset_df.std()
+                        row_summary[f'{condition}_CHalf_count'] = cond_subset_df.count()
+                        row_summary[f'{condition}_CHalf_min'] = cond_subset_df.min()
+                        row_summary[f'{condition}_CHalf_max'] = cond_subset_df.max()
+                        row_summary[f'{condition}_CHalf_Q1'] = cond_subset_df.quantile(0.25)
+                        row_summary[f'{condition}_CHalf_Q3'] = cond_subset_df.quantile(0.75)
+                    else:
+                        # Fill with NaN if no data for this condition and site
+                        for stat in ['mean', 'median', 'std', 'count', 'min', 'max', 'Q1', 'Q3']:
+                            row_summary[f'{condition}_CHalf_{stat}'] = np.nan
+            return row_summary
 
 def CombinedSite(conditions_dict, output_dir, n_cores=1, file_type='jpg', ylim=(0,3.6)):
     """
@@ -2629,72 +2798,15 @@ def CombinedSite(conditions_dict, output_dir, n_cores=1, file_type='jpg', ylim=(
 
     print('Generating Combined Site boxplots...')
     
-    def CS_iteration(label_accession, group_data):
-        warnings.filterwarnings("ignore")
-        # Prepare summary row for CSV
-        row_summary = {'Label@Accession': label_accession}
-        # Extract Label Type, Label Site, Accession, Residue Number
-        parts = label_accession.split('_')
-        row_summary['Label Type'] = parts[0] if len(parts) > 0 else np.nan
-        row_summary['Label Site'] = parts[1] if len(parts) > 1 else np.nan
-        row_summary['Accession'] = '_'.join(parts[2:]) if len(parts) > 2 else np.nan
-        row_summary['Residue Number'] = group_data['Residue Number'].iloc[0] if not group_data.empty and 'Residue Number' in group_data.columns else np.nan
-        
-        # Check if multiple conditions have data points
-        generate_plot = group_data['Condition'].nunique() > 1
-
-        # Generate plot for each Label@Accession group only if condition is met
-        plt.close('all') # Close all existing figures to prevent memory issues
-        
-        if generate_plot:
-            fig, ax = plt.subplots(figsize=(8, 6))
-    
-            with sns.axes_style('whitegrid'):
-                # Create the boxplot - using hue='Condition' for separate boxes and automatic coloring
-                sns.boxplot(data=group_data, x='Condition', y='CHalf', ax=ax,
-                            order=conditions_order,
-                            showfliers=False, # Do not show outliers in boxplot itself
-                            linewidth=1.0)
-    
-                # Add individual data points (swarmplot)
-                sns.swarmplot(data=group_data, x='Condition', y='CHalf', ax=ax,
-                              color='black', size=4, dodge=True, zorder=5) # dodge=True for swarmplot on top of boxplot
-    
-                ax.set_xlabel('Condition', fontsize=12, weight='bold')
-                ax.set_ylabel('C½ [GdmCl]', fontsize=12, weight='bold')
-                ax.tick_params(axis='both', which='major', labelsize=10)
-                ax.set_title(label_accession, fontsize=14, weight='bold')
-                ax.set_ylim(ylim)
-    
-                plt.tight_layout()
-                # Sanitize filename to remove invalid characters
-                safe_label_accession = re.sub(r'[\\/:*?"<>|]', '_', label_accession)
-                output_filepath = os.path.join(output_dir, f'{safe_label_accession} Boxplot.{file_type}')
-                plt.savefig(output_filepath, bbox_inches='tight', dpi=300) # Save with higher DPI
-                plt.close(fig) # Explicitly close the figure to free memory
-    
-                # Populate summary row with statistics for each condition
-                for condition in conditions_order:
-                    cond_subset_df = group_data[group_data['Condition'] == condition]['CHalf'].dropna()
-                    if not cond_subset_df.empty:
-                        row_summary[f'{condition}_CHalf_mean'] = cond_subset_df.mean()
-                        row_summary[f'{condition}_CHalf_median'] = cond_subset_df.median()
-                        row_summary[f'{condition}_CHalf_std'] = cond_subset_df.std()
-                        row_summary[f'{condition}_CHalf_count'] = cond_subset_df.count()
-                        row_summary[f'{condition}_CHalf_min'] = cond_subset_df.min()
-                        row_summary[f'{condition}_CHalf_max'] = cond_subset_df.max()
-                        row_summary[f'{condition}_CHalf_Q1'] = cond_subset_df.quantile(0.25)
-                        row_summary[f'{condition}_CHalf_Q3'] = cond_subset_df.quantile(0.75)
-                    else:
-                        # Fill with NaN if no data for this condition and site
-                        for stat in ['mean', 'median', 'std', 'count', 'min', 'max', 'Q1', 'Q3']:
-                            row_summary[f'{condition}_CHalf_{stat}'] = np.nan
-            return row_summary
-    
-    results = Parallel(n_jobs=n_cores)(delayed(CS_iteration)(
-            label_accession,
-            group_data
-        ) for label_accession, group_data in groups)
+    with concurrent.futures.ProcessPoolExecutor(max_workers=n_cores) as parallel:
+        args_list = [(label_accession,
+                group_data, 
+                conditions_order, 
+                output_dir, 
+                ylim, 
+                file_type
+            ) for label_accession, group_data in groups]
+        results = list(parallel.map(CS_iteration, *zip(*args_list)))
     
     summary_data_rows = [r for r in results if r is not None]
     # Generate a summary CSV
@@ -2724,7 +2836,7 @@ def CombinedSite(conditions_dict, output_dir, n_cores=1, file_type='jpg', ylim=(
 
     print("Combined Site plotting complete.")
 
-def main(args):
+def run(args):
     params_file = args.workflow
     manifest_file = args.manifest
     vis_config_file = args.visual
@@ -2920,70 +3032,76 @@ def main(args):
                     traceback.print_exc()
     print('Workflow complete.')
 
-parser = argparse.ArgumentParser(description="Calculates protein folding stability from mass spec data.")
+def main():
+    citation = '[NO_TIMESTAMP]Hyer, C. D.; Lin, H.-J. L.; Haderlie, C. T.; Berg, M.; Price, J. C.\n[NO_TIMESTAMP]CHalf: Folding Stability Made Simple.\n[NO_TIMESTAMP]Journal of Proteome Research 2023, 22 (2), 605-614.\n[NO_TIMESTAMP]DOI: 10.1021/acs.jproteome.2c00619.'
+    parser = argparse.ArgumentParser(description="Calculates protein folding stability from mass spec data.")
 
-# Named parameters
-parser.add_argument(
-    "-w", "--workflow",
-    type=str,
-    required=True,
-    help="A .worfklow file containing all of the parameters to be used by CHalf."
-)
-parser.add_argument(
-    "-m", "--manifest",
-    type=str,
-    required=True,
-    help="A .manifest file containing the information about the input files to be used by CHalf."
-)
-parser.add_argument(
-    "-v", "--visual",
-    type=str,
-    required=False, # This is the default, but good for clarity
-    help="A .vis file used for specifying the parameters of "
-)
-parser.add_argument(
-    "-d", "--directory",
-    type=str,
-    required=True,
-    help="Working directory for the CHalf project."
-)
-parser.add_argument(
-    "-", "--log",
-    type=str,
-    required=False, # This is the default, but good for clarity
-    help="For outputing a log file if using command line. Accepts a string as the name of the log file that will be saved as a .txt file in the output directory."
-)
-
-args = parser.parse_args()
-working_dir = args.directory
-log_param = args.log
-
-if args.log:
-    original_stdout = sys.stdout
-    if not os.path.isdir(working_dir):
-        os.makedirs(working_dir,exist_ok=True)
-    with open(f'{working_dir}/{log_param}.txt', 'w') as f:
-        sys.stdout = f
-        start = time.time()
-        main(args)
-        end = time.time()
-        total_time_seconds = end - start
-        total_minutes = total_time_seconds / 60.0
-        message_text = f"CHALF PROCESSES COMPLETED IN {total_minutes:.2f} MINUTES"
-        
-        # Calculate flanking '=' signs for approximate centering
-        # Using 78 as an approximate common terminal width for display
-        filler_chars_total = 99 - len(message_text)
-        left_filler_len = filler_chars_total // 2
-        right_filler_len = filler_chars_total - left_filler_len
-        
-        final_display_message = f"{'=' * left_filler_len} {message_text} {'=' * right_filler_len}"
-        print(final_display_message)
+    # Named parameters
+    parser.add_argument(
+        "-w", "--workflow",
+        type=str,
+        required=True,
+        help="A .worfklow file containing all of the parameters to be used by CHalf."
+    )
+    parser.add_argument(
+        "-m", "--manifest",
+        type=str,
+        required=True,
+        help="A .manifest file containing the information about the input files to be used by CHalf."
+    )
+    parser.add_argument(
+        "-v", "--visual",
+        type=str,
+        required=False, # This is the default, but good for clarity
+        help="A .vis file used for specifying the parameters of "
+    )
+    parser.add_argument(
+        "-d", "--directory",
+        type=str,
+        required=True,
+        help="Working directory for the CHalf project."
+    )
+    parser.add_argument(
+        "-", "--log",
+        type=str,
+        required=False, # This is the default, but good for clarity
+        help="For outputing a log file if using command line. Accepts a string as the name of the log file that will be saved as a .txt file in the output directory."
+    )
+    
+    args = parser.parse_args()
+    working_dir = args.directory
+    log_param = args.log
+    if args.log:
+        original_stdout = sys.stdout
+        if not os.path.isdir(working_dir):
+            os.makedirs(working_dir,exist_ok=True)
+        with open(f'{working_dir}/{log_param}.txt', 'w') as f:
+            sys.stdout = f
+            start = time.time()
+            run(args)
+            end = time.time()
+            total_time_seconds = end - start
+            total_minutes = total_time_seconds / 60.0
+            message_text = f"CHALF PROCESSES COMPLETED IN {total_minutes:.2f} MINUTES"
+            
+            # Calculate flanking '=' signs for approximate centering
+            # Using 78 as an approximate common terminal width for display
+            filler_chars_total = 99 - len(message_text)
+            left_filler_len = filler_chars_total // 2
+            right_filler_len = filler_chars_total - left_filler_len
+            
+            final_display_message = f"{'=' * left_filler_len} {message_text} {'=' * right_filler_len}"
+            print(final_display_message)
+            print('[NO_TIMESTAMP]Please cite:')
+            print(citation)
+        sys.stdout = original_stdout 
+    
+    else:
+        run(args)
         print('[NO_TIMESTAMP]Please cite:')
-        print(citation)
-    sys.stdout = original_stdout 
-else:
-    main(args)
-    print('[NO_TIMESTAMP]Please cite:')
-    print(citation)
+        print(citation)    
 
+if __name__ == "__main__":
+    multiprocessing.freeze_support()
+    main()
+    time.sleep(3)

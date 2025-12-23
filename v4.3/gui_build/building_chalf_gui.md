@@ -17,7 +17,7 @@ conda create --name chalf_gui
 conda activate chalf_gui
 pip install -r gui_requirements.txt
 pip install pyinstaller
-pyinstaller CHalf_v4_3_UI_production.py --name CHalf_v4_3 --onefile --windowed --icon "CHalf Protein Logo.ico" --add-data "images;images"
+python -m PyInstaller chalf_ui.spec
 ```
 
 ## Compiling CHalf Core
@@ -35,5 +35,10 @@ conda create --name chalf_core
 conda activate chalf_core
 pip install -r chalf_requirements.txt
 pip install pyinstaller
-pyinstaller CHalf_v4_3.py --name CHalf_v4_3_core --onefile --noconsole --icon "CHalf Protein Logo.ico"
+python -m PyInstaller chalf_core.spec
+```
+
+For compiling a strictly headless version, you may use the same environment but use this command instead:
+```
+python -m PyInstaller chalf_headless.spec
 ```

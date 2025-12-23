@@ -1,5 +1,6 @@
 ### CHALF SETTINGS ###
 chalf=True
+cores=-1
 
 ## CHALF LIGHT SEARCH SETTINGS ##
 chalf.search.light=True
